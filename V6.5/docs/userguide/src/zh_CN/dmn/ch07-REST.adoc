@@ -1,6 +1,7 @@
 
 === Deployment
 (部署)
+
 *When using tomcat, please read <<restUsageInTomcat,Usage in Tomcat>>.*
 *（当使用tomcat时，请阅读 <<restUsageInTomcat,Usage in Tomcat>>.）*
 
@@ -26,7 +27,10 @@ GET dmn-repository/deployments
 |sort|No|'id' (default), 'name', 'deploytime' or 'tenantId'|Property to sort on, to be used together with the 'order'.
 |The general <<restPagingAndSort,paging and sorting query-parameters>> can be used for this URL.
 
+|===============
 
+[options="header"]
+|===============
 |参数|必需|类型|描述
 |name|No|String|返回指定名称的部署.
 |nameLike|No|String|模糊查询指定名称的部署.
@@ -37,12 +41,7 @@ GET dmn-repository/deployments
 |withoutTenantId|No|Boolean|如果为true 则返回指定tenantId以外的部署，如果为false 则忽略掉该参数.
 |sort|No|'id' (default), 'name', 'deploytime' or 'tenantId'|属性进行排序，与“order”一起使用.
 |可以使用<<restPagingAndSort,paging and sorting query-parameters>>.
-
 |===============
-
-
-
-
 
 
 .REST Response codes
@@ -52,17 +51,17 @@ GET dmn-repository/deployments
 |Response code|Description
 |200|Indicates the request was successful.
 
+|===============
+
+[options="header"]
+|===============
 |返回编码|描述
 |200|请求成功.
-
 |===============
 
 
-
-
-
 *Success response body:*
-（*成功返回示例:*）
+*成功返回示例:*
 
 [source,json,linenums]
 ----
@@ -101,6 +100,10 @@ GET dmn-repository/deployments/{deploymentId}
 |Parameter|Required|Value|Description
 |deploymentId|Yes|String|The identifier of the deployment to get.
 
+|===============
+
+[options="header"]
+|===============
 |参数|必需|类型|描述
 |deploymentId|Yes|String|部署唯一id.
 
@@ -115,6 +118,10 @@ GET dmn-repository/deployments/{deploymentId}
 |200|Indicates the deployment was found and returned.
 |404|Indicates the requested deployment was not found.
 
+|===============
+
+[options="header"]
+|===============
 |返回编码|描述
 |200|找到并返回指定部署.
 |404|为找到指定的部署.
@@ -122,7 +129,7 @@ GET dmn-repository/deployments/{deploymentId}
 |===============
 
 *Success response body:*
-（*成功示例:*）
+*成功示例:*
 [source,json,linenums]
 ----
 {
@@ -160,6 +167,10 @@ An additional parameter (form-field) can be passed in the request body with name
 |201|Indicates the deployment was created.
 |400|Indicates there was no content present in the request body or the content mime-type is not supported for deployment. The status-description contains additional information.
 
+|===============
+
+[options="header"]
+|===============
 |返回编码|描述
 |201|指定的部署已经存在.
 |400|请求主体中不存在内容，或部署不支持该内容的mime-type。状态描述包含附加信息。
@@ -196,6 +207,10 @@ DELETE dmn-repository/deployments/{deploymentId}
 |Parameter|Required|Value|Description
 |deploymentId|Yes|String|The identifier of the deployment to delete.
 
+|===============
+
+[options="header"]
+|===============
 |参数|必需|类型|描述
 |deploymentId|Yes|String|需要删除的部署的编号.
 
@@ -210,6 +225,10 @@ DELETE dmn-repository/deployments/{deploymentId}
 |204|Indicates the deployment was found and has been deleted. Response-body is intentionally empty.
 |404|Indicates the requested deployment was not found.
 
+|===============
+
+[options="header"]
+|===============
 |返回编码|描述
 |204|指定的部署已经被删除。返回内容特意为空。
 |404|未找到指定的部署。
@@ -231,7 +250,10 @@ GET dmn-repository/deployments/{deploymentId}/resourcedata/{resourceId}
 |deploymentId|Yes|String|The identifier of the deployment the requested resource is part of.
 |resourceId|Yes|String|The identifier of the resource to get the data for. *Make sure you URL-encode the resourceId in case it contains forward slashes. For example, use 'decisions%2Fmy-decision.dmn' instead of 'decisions/my-decision.dmn'.*
 
+|===============
 
+[options="header"]
+|===============
 |参数|必需|类型|描述
 |deploymentId|Yes|String|指定部署编号。
 |resourceId|Yes|String|指定资源编号。确保resourceId的URL编码，以防它包含前斜杠。例如，使用 'decisions%2Fmy-decision.dmn'。而不是'decisions/my-decision.dmn'
@@ -248,6 +270,10 @@ GET dmn-repository/deployments/{deploymentId}/resourcedata/{resourceId}
 |200|Indicates both deployment and resource have been found and the resource data has been returned.
 |404|Indicates the requested deployment was not found or there is no resource with the given identifier present in the deployment. The status-description contains additional information.
 
+|===============
+
+[options="header"]
+|===============
 |Response code|Description
 |200|已找到指定的部署和资源，并返回资源数据。
 |404|未找到所请求的部署，或部署中不存在指定的资源。状态描述包含附加信息。
@@ -292,7 +318,10 @@ GET dmn-repository/decision-tables
 |sort|No|'name' (default), 'id', 'key', 'category', 'deploymentId' and 'version'|Property to sort on, to be used together with the 'order'.
 |The general <<restPagingAndSort,paging and sorting query-parameters>> can be used for this URL.
 
+|===============
 
+[options="header"]
+|===============
 |参数|必需|类型|描述
 |version|No|integer|返回指定版本的流程定义。
 |name|No|String|返回指定名称的流程定义。
@@ -320,6 +349,10 @@ GET dmn-repository/decision-tables
 |200|Indicates request was successful and the decision tables are returned
 |400|Indicates a parameter was passed in the wrong format or that 'latest' is used with other parameters other than 'key' and 'keyLike'. The status-message contains additional information.
 
+|===============
+
+[options="header"]
+|===============
 |返回编码|描述
 |200|请求成功，并返回决策表
 |400|参数以错误的格式传递，或'latest' 与'key' 和 'keyLike'以外的其他参数一起使用。状态消息包含其他信息。
@@ -371,6 +404,10 @@ GET dmn-repository/decision-tables/{decisionTableId}
 |Parameter|Required|Value|Description
 |decisionTableId|Yes|String|The identifier of the decision table to get.
 
+|===============
+
+[options="header"]
+|===============
 |参数|必需|类型|描述
 |decisionTableId|Yes|String|决策表编号。
 
@@ -385,6 +422,10 @@ GET dmn-repository/decision-tables/{decisionTableId}
 |200|Indicates the decision table was found and returned.
 |404|Indicates the requested decision table was not found.
 
+|===============
+
+[options="header"]
+|===============
 |Response code|Description
 |200|找到指定编号决策表并返回
 |404|未找到指定编号决策表
@@ -426,6 +467,10 @@ GET dmn-repository/decision-tables/{decisionTableId}/resourcedata
 |Parameter|Required|Value|Description
 |decisionTableId|Yes|String|The identifier of the decision table to get the resource data for.
 
+|===============
+
+[options="header"]
+|===============
 |参数|必需|类型|描述
 |decisionTableId|Yes|String|决策表编号。
 
@@ -451,6 +496,10 @@ GET dmn-repository/decision-tables/{decisionTableId}/model
 |Parameter|Required|Value|Description
 |decisionTableId|Yes|String|The identifier of the decision table to get the model for.
 
+|===============
+
+[options="header"]
+|===============
 |参数|必需|类型|描述
 |decisionTableId|Yes|String|决策表编号。
 
@@ -465,7 +514,10 @@ GET dmn-repository/decision-tables/{decisionTableId}/model
 |200|Indicates the decision table was found and the model is returned.
 |404|Indicates the requested decision table was not found.
 
+|===============
 
+[options="header"]
+|===============
 |返回编码|描述
 |200|找到指定决策表并返回模型。
 |404|未找到指定决策表。
@@ -551,8 +603,13 @@ The request body should contain data of type _multipart/form-data_. The decision
 |Response code|Description
 |201|Indicates the Decision has been executed.
 
+|===============
+
+[options="header"]
+|===============
 |返回编码|描述
 |201|已执行该决策。
+
 |===============
 
 ==== Execute a single result decision
@@ -599,9 +656,14 @@ When multiple rules are valid the service will respond with a 500 code.
 |201|Indicates the Decision has been executed.
 |500|Indicates the Decision returned multiple results.
 
+|===============
+
+[options="header"]
+|===============
 |返回编码|描述
 |201|已执行指定决策。
 |500|指定决策返回多个结果。
+
 |===============
 
 
@@ -638,6 +700,10 @@ Returns a read-only view of the DMN engine that is used in this REST-service.
 |Response code|Description
 |200|Indicates the engine information has been returned.
 
+|===============
+
+[options="header"]
+|===============
 |返回编码|描述
 |200|返回指定引擎信息。
 
