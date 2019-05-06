@@ -294,7 +294,7 @@ public class DmnEnginesServletContextListener implements ServletContextListener 
 ----
 
 The +contextInitialized+ method will delegate to +DmnEngines.init()+. This will look for +flowable.dmn.cfg.xml+ resource files on the classpath, and create a +DmnEngine+ for the given configurations (for example, multiple JARs with a configuration file). If you have multiple such resource files on the classpath, make sure they all have different names. When the DMN engine is needed, it can be fetched using:
-(contextInitialized 方法将委托给 DmnEngines.init()。 这将寻找类路径上的 +flowable.dmn.cfg.xml+ 资源文件，并对于给定的配置创建一个 +DmnEngine+ (例如，带有配置文件的多个JAR).如果类路径上有多个此类资源文件，请确保它们都具有不同的名称。 当需要DMN引擎时，可以使用以下方式获取它：)
+(contextInitialized 方法将调用 DmnEngines.init()。 这将寻找类路径上的 +flowable.dmn.cfg.xml+ 资源文件，并对于给定的配置创建一个 +DmnEngine+ (例如，带有配置文件的多个JAR).如果类路径上有多个此类资源文件，请确保它们都具有不同的名称。 当需要DMN引擎时，可以使用以下方式获取它：)
 
 [source,java,linenums]
 ----
@@ -315,4 +315,4 @@ as described in the <<configuration,configuration section>>.
 
 
 The +contextDestroyed+ method of the context-listener delegates to +DmnEngines.destroy()+. That will properly close all initialized DMN engines.
-(context-listener的 contextDestroyed方法委托给 DmnEngines.destroy()。 这将适当地关闭所有初始化的DMN引擎。)
+(context-listener的 contextDestroyed方法会调用 DmnEngines.destroy()。 它会妥善关闭所有初始化的DMN引擎。)
