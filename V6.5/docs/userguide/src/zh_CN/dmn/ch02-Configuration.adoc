@@ -185,18 +185,17 @@ Flowable DMN 引擎有两种方式进行数据库配置。第一种方式是定�
 
 === JNDI 数据源配置
 
-By default, the database configuration for Flowable DMN is contained within the db.properties files in the WEB-INF/classes of each web application. This isn't always ideal because it
-requires users to either modify the db.properties in the Flowable source and recompile the WAR file, or explode the WAR and modify the db.properties on every deployment.
+默认情况下，Flowable DMN 的数据库配置包含在每个 web 应用的 WEB-INF/classes 下的 db.properties 文件中。但是这样并不理想，因为它使得用户要么修改 Flowable 代码中的 db.properties 并重新编译 WAR 文件，要么在每一次项目部署时解压 WAR 并修改 db.properties。
 
-By using JNDI (Java Naming and Directory Interface) to obtain the database connection, the connection is fully managed by the Servlet Container and the configuration can be managed outside the war deployment. This also allows more control over the connection parameters than what is provided by the db.properties file.
+通过 JNDI （Java Naming and Directory Interface）获取数据库连接，这个连接将完全由 Servlet 容器管理，且配置可以在 war 包外部进行管理。而且相比 db.properties 文件，这种方式还能对连接参数进行更多的控制。
 
 [[jndi_configuration]]
 
-==== Configuration
+==== 配置
 
-Configuration of the JNDI datasource will differ depending on what servlet container application you are using. The instructions below will work for Tomcat, but for other container applications, please refer to the documentation for your container app.
+JNDI 数据源的配置将视你所使用的 servlet 容器而有所不同。下面的说明适用于 Tomcat，至于其他的容器，请参阅各容器的文档。
 
-If using Tomcat, the JNDI resource is configured within $CATALINA_BASE/conf/[enginename]/[hostname]/[warname].xml (for the Flowable UI this will usually be $CATALINA_BASE/conf/Catalina/localhost/flowable-app.xml). The default context is copied from the Flowable WAR file when the application is first deployed, so if it already exists, you will need to replace it. To change the JNDI resource so that the application connects to MySQL instead of H2, for example, change the file to the following:
+如果使用 Tomcat，JNDI 资源配置在 $CATALINA_BASE/conf/[enginename]/[hostname]/[warname].xml 中（Flowable UI 的配置通常在 $CATALINA_BASE/conf/Catalina/localhost/flowable-app.xml）。默认的 context 是在应用初次部署时从 Flowable WAR 文件中复制过来的，所以如果已经存在的话你需要进行替换。比如，要使用 MySql 而不是 H2，可如下修改 JNDI 资源：
 
 [source,xml,linenums]
 ----
@@ -219,59 +218,59 @@ If using Tomcat, the JNDI resource is configured within $CATALINA_BASE/conf/[eng
 ----
 
 
-==== JNDI properties
+==== JNDI 属性
 
-To configure a JNDI Datasource, use the following properties in the properties file for the Flowable UI:
+要配置 JNDI 数据源，使用下面这些 Flowable UI 的 properties 文件中的属性：
 
-* spring.datasource.jndi-name=: the JNDI name of the Datasource.
-* datasource.jndi.resourceRef: Set whether the lookup occurs in a J2EE container, in other words, if the prefix "java:comp/env/" needs to be added if the JNDI name doesn't already contain it. Default is "true".
+* spring.datasource.jndi-name=：数据源的 JNDI 名称。
+* datasource.jndi.resourceRef：设置查询是否发生在 J2EE 容器中，换句话说，JNDI 名称中不包含前缀“java:comp/env/”时是否要把它加上。默认“true”。
 
 
 [[supporteddatabases]]
 
 
-=== Supported databases
+=== 支持的数据库
 
-Listed below are the types (case sensitive!) that Flowable uses to refer to databases.
+下面列出了 Flowable 所使用的数据库的类型（区分大小写！）。
 
 [[databaseTypes]]
 [options="header"]
 |===============
-|Flowable DMN database type|Example JDBC URL|Notes
-|h2|jdbc:h2:tcp://localhost/flowable_dmn|Default configured database
-|mysql|jdbc:mysql://localhost:3306/flowable_dmn?autoReconnect=true|Tested using mysql-connector-java database driver
+|Flowable DMN 数据库类型| JDBC URL 示例|备注
+|h2|jdbc:h2:tcp://localhost/flowable_dmn|默认数据库
+|mysql|jdbc:mysql://localhost:3306/flowable_dmn?autoReconnect=true|已使用 mysql-connector-java 数据库驱动进行测试
 |oracle|jdbc:oracle:thin:@localhost:1521:xe|
 |postgres|jdbc:postgresql://localhost:5432/flowable_dmn|
 |db2|jdbc:db2://localhost:50000/flowable_dmn|
-|mssql|jdbc:sqlserver://localhost:1433;databaseName=flowable_dmn (jdbc.driver=com.microsoft.sqlserver.jdbc.SQLServerDriver) _OR_ jdbc:jtds:sqlserver://localhost:1433/flowable_dmn (jdbc.driver=net.sourceforge.jtds.jdbc.Driver)|Tested using Microsoft JDBC Driver 4.0 (sqljdbc4.jar) and JTDS Driver
+|mssql|jdbc:sqlserver://localhost:1433;databaseName=flowable_dmn (jdbc.driver=com.microsoft.sqlserver.jdbc.SQLServerDriver) _OR_ jdbc:jtds:sqlserver://localhost:1433/flowable_dmn (jdbc.driver=net.sourceforge.jtds.jdbc.Driver)|已使用 Microsoft JDBC Driver 4.0（sqljdbc4.jar）和 JTDS 驱动进行测试
 |===============
 
 
 [[creatingDatabaseTable]]
 
-=== Creating the database tables
+=== 创建数据库表
 
-Flowable DMM uses link:$$http://www.liquibase.org$$[Liquibase] for tracking, managing and applying database schema changes.
+Flowable DMN 使用 link:$$http://www.liquibase.org$$[Liquibase] 跟踪、管理和应用数据库表的变更。
 
-The easiest way to create the database tables for your database is to:
+创建数据库表的最简单的方式是：
 
-* Add the flowable-dmn-engine JARs to your classpath
-* Add a suitable database driver
-* Add a Flowable configuration file (__flowable.dmn.cfg.xml__) to your classpath, pointing to your database (see <<databaseConfiguration,database configuration section>>)
-* Execute the main method of the _DbSchemaCreate_ class
+* 将 flowable-dmn-engine 相关JAR包添加到 classpath
+* 添加合适的数据库驱动
+* 添加 Flowable 配置文件（__flowable.dmn.cfg.xml__）到 classpath，指向你的数据库（参阅 <<databaseConfiguration,“数据库配置”章节>>）
+* 执行 _DbSchemaCreate_ 类的 main 方法
 
 [[database.tables.explained]]
 
 
-=== Database table names explained
+=== 数据库表名称说明
 
-The database names of Flowable DMN all start with *ACT_DMN_*.
+Flowable DMN 的表名全部以 *ACT_DMN_* 开头。
 
-* ACT_DMN_DATABASECHANGELOG: This table is used by Liquibase to track which changesets have been run.
-* ACT_DMN_DATABASECHANGELOGLOCK: This table is used by Liquibase to ensure only one instance of Liquibase is running at a time.
-* ACT_DMN_DECISION_TABLE: This table contains the metadata of the deployed decision tables.
-* ACT_DMN_DEPLOYMENT: This table contains the deployment metadata.
-* ACT_DMN_DEPLOYMENT_RESOURCE: This table contains the DMN definition resource and metadata.
+* ACT_DMN_DATABASECHANGELOG：此表用于 Liquibase 对已运行的变更进行追踪。
+* ACT_DMN_DATABASECHANGELOGLOCK：此表用于 Liquibase 确保同时只有一个 Liquibase 实例在运行。
+* ACT_DMN_DECISION_TABLE：此表包含了已部署的决策表的元数据。
+* ACT_DMN_DEPLOYMENT：此表包含了每次部署行为的元数据。
+* ACT_DMN_DEPLOYMENT_RESOURCE：此表包含了 DMN 定义的资源和元数据。
 
 [[databaseUpgrade]]
 
