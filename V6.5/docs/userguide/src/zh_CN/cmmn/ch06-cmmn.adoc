@@ -907,9 +907,11 @@ Here's an example of how to set a variable in a script:
 
 The following names are reserved and *cannot be used* as variable names: *out, out:print, lang:import, context, elcontext*.
 
-以下名称是预留的, *cannot be used* 不能被使用: *out, out:print, lang:import, context, elcontext*.
+以下名称是预留的, 不能被使用: *out, out:print, lang:import, context, elcontext*.
 
 *Note* The return value of a script task can be assigned to an already existing or new plan item instance variable by specifying its name as a literal value for the _'flowable:resultVariable'_ attribute of a script task definition. Any existing value for a specific plan item instance variable will be overwritten by the result value of the script execution. When a result variable name is not specified, the script result value gets ignored.
+
+*Note* 脚本任务的返回值可以被分配给一个已经存在或者新的计划项实例变量, 通过在脚本任务定义中设置_'flowable:resultVariable'_ 属性值.任何已经存在的相同名称变量的值会被脚本返回值覆盖.当未明确设置返回结果变量名, 脚本的返回值会被忽略.
 
 [source,xml,linenums]
 ----
@@ -922,130 +924,258 @@ The following names are reserved and *cannot be used* as variable names: *out, o
 
 In the above example, the result of the script execution (the value of the resolved expression __'#{echo}'__) is set to the process variable named __'myVar'__ after the script completes.
 
+在上述实例中, 当脚本执行结束后, 脚本的返回值( __'#{echo}'__的解析值)会被设置成名称为 __'myVar'__ 的流程变量值.
+
 ==== Milestone
+
+==== Milestone 里程碑
 
 A milestone is used to mark arriving at a certain point in the case instance. At runtime, they are represented as *MilestoneInstances* and they can be queried through the *MilestoneInstanceQuery* via the _CmmnRuntimeService_. There is also a historical counterpart via the _CmmnHistoryService_.
 
+里程碑被用作标记到达案例实例中的某个点. 在运行时, 它们被称为 *MilestoneInstances* , 可以通过调用 _CmmnRuntimeService_ 的 *MilestoneInstanceQuery* 查询. 也可以通过 _CmmnHistoryService_ 获取一个历史副本.
+
 A milestone is a plan item, which means that as well as a milestone entry, a _PlanItemInstance_ is created also, which can be queried via the _PlanItemInstanceQuery_.
 
+里程碑也是计划项, 这意味着除了里程碑条目外, _PlanItemInstance_ 同样会被创建, 通过_PlanItemInstanceQuery_ 可以查询到.
 
 Properties:
 
+属性:
+
 * *name*: an expression or static text that determines the name of the milestone
+* *name*: 一个表达式或者静态文本, 决定里程碑名称
 
 A milestone is visualized as a rounded rectangle (more rounded than a task):
+
+里程碑被看作一个圆角矩形(比任务更圆一些)
 
 image::images/cmmn.milestone.png[align="center"]
 
 ==== Case task
 
+==== Case task 案例任务
+
 A case task is used to start a child case within the context of another case. The _CaseInstanceQuery_ has _parent_ options to find these cases.
+
+用例任务用作在一个案例上下文中启动一个子案例. _CaseInstanceQuery_ 有一些选项查询父类案例.
 
 When the case task is blocking, the _PlanItemInstance_ will be _active_ until the child case has completely finished. If the case task is non-blocking, the child case is started and the plan item instance automatically completes. When the child case instance ends there is no impact on the parent case.
 
+当一个案例任务被阻塞, _PlanItemInstance_ 将会处于活跃状态, 直到子案例全部完成.如果案例任务是非阻塞, 子案例启动后, 计划项实例自动完成.当子案例实例结束对父类没有影响.
+
 Properties:
 
+属性:
+
 * *name*: an expression or static text that determines the name
+* *name*: 表达式或静态文本, 决定名称
+
 * *blocking*: a boolean value determining whether the task blocks
+* *blocking*: 布尔值决定任务是否被阻塞
+
 * *blockingExpression*: an expression that evaluates to a boolean indicating whether the tasks blocks
+* *blockingExpression*: 表达式计算得到布尔值决定任务是否被阻塞
+
 * *Case reference*: the key of the case definition that is used to start the child case instance. Can be an expression
+* *Case reference*: 案例定义的key, 用来启动一个子实例.可以是一个表达式
 
 A case task is visualized as a rounded rectangle with a case icon in the top left corner:
+
+一个案例任务看作一个圆角矩形, 左上角有一个case 图标
 
 image::images/cmmn.casetask.png[align="center"]
 
 ==== Process task
 
+==== Process task 流程任务
+
 A process task is used to start a process instance within the context of a case.
+
+流程任务被用作在案例上下文中启动一个流程实例
 
 When the process task is blocking, the _PlanItemInstance_ will be _active_ until the process instance has completely finished. If the process task is non-blocking, the process instance is started and the plan item instance automatically completes. When the process instance ends there is no impact on the parent case.
 
+当流程任务被阻塞, _PlanItemInstance_ 将会一直 活跃_active_状态, 直到 流程实例全部完成. 如果流程任务非阻塞, 流程实例任务启动并且计划项实例自动完成, 当流程实例结束对父类没有任何影响.
+
 Properties:
 
+属性:
+
 * *name*: an expression or static text that determines the name
+* *name*: 表达式或静态文本, 决定名称
+
 * *blocking*: a boolean value determining whether the task blocks
+* *blocking*: 布尔值决定任务是否被阻塞
+
 * *blockingExpression*: an expression that evaluates to a boolean indicating whether the tasks blocks
+* *blockingExpression*: 表达式计算得到布尔值决定任务是否被阻塞
+
 * *Process reference*: the key of the process definition that is used to start the process instance. Can be an expression
+* *Process reference*: 案例定义的key, 用来启动一个子实例.可以是一个表达式
 
 A process task is visualized as a rounded rectangle with an arrow icon in the top left corner:
+
+一个流程任务看作一个圆角矩形, 左上角有个箭头图标
 
 image::images/cmmn.processtask.png[align="center"]
 
 A process task can be configured to have in- and out parameters, which take the form of _source/sourceExpression_ and _target/targetExpression_.
 
+流程任务可以配置为具有内部和外部参数，这些参数的形式是_source/sourceExpression_ and _target/targetExpression_.
+
 The in parameters are resolved within context of the case instance.
 
+内部参数在当前案例实例上下文内被解析.
+
 * The _source_ value will be the case instance variable which value will be mapped to a process variable
+* _source_ value 将把一个case实例变量, 映射成一个流程变量
+
 * Alternatively, the _sourceExpression_ allows to create an arbitrary value, where the expression is resolved against the case instance.
+* 或者, the _sourceExpression_ 允许创建任意值，其中表达式根据case实例解析.
+
 * The _target_ will be the name of the process variable to which the source value is mapped.
+* _target_ 是流程变量的名称, 是被_source_映射
+
 * Alternatively, the _targetExpression_ will resolve to a *string* value that is used as variable name in the process instance. The expression is resolved within case instance context.
+* 或者, _targetExpression_将被解析成一个 *string*, 用作流程实例的变量名称.表达式根据case实例上下文解析.
 
 The out parameters are resolved within context of the process instance.
 
+内部参数在当前流程实例(全局)上下文内被解析.
+
 * The _source_ value will be the process instance variable which value will be mapped to a case variable
+* _source_ value 将把一个流程变量值, 映射成一个case变量
+
 * Alternatively, the _sourceExpression_ allows to create an arbitrary value, where the expression is resolved against the process instance.
+* 或者, the _sourceExpression_ 允许创建任意值，其中表达式根据流程实例解析.
+
 * The _target_ will be the name of the case variable to which the source value is mapped.
+* _target_ 是流程变量的名称, 是被_source_映射
+
 * Alternatively, the _targetExpression_ will resolve to a *string* value that is used as variable name in the case instance. The expression is resolved within process instance context.
+* 或者, _targetExpression_将被解析成一个 *string*, 用作case实例的变量名称.表达式根据流程实例(全局)上下文解析.
 
 ==== Criteria
 
+==== Criteria 凭证
+
 ===== Entry criterion (entry sentry)
+
+===== Entry criterion (entry sentry) 入口凭证 (入口哨兵)
 
 Entry criteria form a sentry for a given plan item instance. They consist of two parts:
 
+进入凭证构成一个计划项实例的哨兵, 它们由两部分组成:
+
 * One or more parts that depend on other plan items: these define dependencies on state transitions of other plan items. For example, one human task can depend on the state transition 'complete' of three other human tasks to become active itself
+* 一个或者多个部分依赖其他计划项: 它们依赖其他计划项状态的转变.例如一个人工任务取决于另外三个人工任务的完成,才能变成活跃状态.
+
 * One optional _if part_ or _condition_: this is an expression that allows the definition of a complex condition
+*一个可选的如果部分或条件: 允许定义一个复杂条件的表达式
 
 A sentry is satisfied when all its criteria are resolved to _true_. When a criterion evaluates to true, this is stored and remembered for future evaluations. Note that entry criteria of all plan item instances in the _available_ state are evaluated whenever something changes in the case instance.
 Multiple sentries are possible on a plan item. However, when one is satisfied, the plan item moves from state _available_ to _active_.
 
+一个哨兵只有所有凭证解析为 _true_, 才会满足条件. 当一个凭证被解析为true, 将会被存储以便后续计算. 注意当case实例中发生更改时，将计算处于可用状态的所有计划项实例的入口条件.
+多个哨兵可能会用在一个计划项, 然而当一个哨兵满足条件, 该计划项状态会从可用 _available_ 变成活跃 _active_.
+
 See <<cmmn_sentry_evaluation,the section on sentry evaluation>> for more information.
 
+查阅 <<cmmn_sentry_evaluation,the section on sentry evaluation>>, 了解更多详情.
+
 An entry criterion is visualized as a diamond shape (white color inside) on the border of a plan item:
+
+入口哨兵被看作一个菱形(内部白色),位于计划项边界上:
 
 image::images/cmmn.entrycriteria.png[align="center"]
 
 ===== Exit criterion (exit sentry)
 
+===== Exit criterion (exit sentry) 出口凭证 (出口哨兵)
+
 Exit criteria form a sentry for a given plan item instance. They consist of two parts:
 
+进入凭证构成一个计划项实例的哨兵, 它们由两部分组成:
+
 * One or more parts that depend on other plan items: these define dependencies on state transitions of other plan items. For example, one human task can depend on reaching a certain milestone to be automatically terminated
+* 一个或者多个部分依赖其他计划项: 它们依赖其他计划项状态的转变.例如一个人工任务取决于另外三个人工任务的完成,才能变成活跃状态.
+
 * One optional _if part_ or _condition_: this is an expression that allows a complex condition to be defined
+*一个可选的如果部分或条件: 允许定义一个复杂条件的表达式
 
 A sentry is satisfied when all its criteria are resolved to _true_. When a criterion evaluates to true, this is stored and remembered for future evaluations. Note that exit criteria of all plan item instances in the _active_ state are evaluated whenever something changes in the case instance.
 Multiple sentries are possible on a plan item. However, when one is satisfied, the plan item moves from state _active_ to _exit_.
 
+一个哨兵只有所有凭证解析为 _true_, 才会满足条件. 当一个凭证被解析为true, 将会被存储以便后续计算. 注意当case实例中发生更改时，将计算处于可用状态的所有计划项实例的入口条件.
+多个哨兵可能会用在一个计划项, 然而当一个哨兵满足条件, 该计划项状态会从活跃 _active_ 变成退出  _exit_.
+
 See <<cmmn_sentry_evaluation,the section on sentry evaluation>> for more information.
 
+查阅 <<cmmn_sentry_evaluation,the section on sentry evaluation>> 了解更多.
+
 An exit criterion is visualized as a diamond shape (white color inside) on the border of a plan item:
+
+出口哨兵被看作一个菱形(内部黑色),位于计划项边界上:
 
 image::images/cmmn.exitcriteria.png[align="center"]
 
 ==== Event Listeners
 
+==== Event Listeners 事件监听器
+
 ===== Timer Event Listener
+
+===== Timer Event Listener 计时器事件监听器
 
 A timer event listener is used when the passing of time needs to be captured in a case model.
 
+计时器事件监听器在一个case模型中被用作捕获时间的传递.
+
+
 A timer event listener is not a task and has a simpler plan item lifecycle compared to a _task_: the timer will simply move from _available_ to _completed_ when the event (in this case, the time passing) occurs.
+
+计时器事件监听器不是一个任务, 相比于任务, 拥有更简单的生命周期: 当一个事件(比如, 时间传递)发生时, 计时器简单从可用 _available_ 状态变成完成 _completed_ 状态.
+
 
 Properties:
 
+属性:
+
 * *Timer expression*: an expression that defines when the timer should occur. The following options are possible:
+* *Timer expression*: 表达式定义计时器何时发生. 以下是可能的使用配置:
+
 ** An expression resolving to a java.util.Date or org.joda.time.DateTime instance (for example, _${someBean.calculateNextDate(someCaseInstanceVariable)})
-** An ISO8601 date 
+** 表达式被解析成 a java.util.Date or org.joda.time.DateTime instance (例如,  _${someBean.calculateNextDate(someCaseInstanceVariable)}_)
+
+** An ISO8601 date
+** ISO8601 格式日期
+
 ** An ISO8601 duration String (for example, _PT5H_, indicating the timer should fire in 5 hours from instantiation)
-** AN ISO8601 repetition String (for example, R5/PT2H, indicating the timer should fire 5 times, each time waiting 2 hours)  
+** ISO8601 格式 持续String (例如, _PT5H_, 表示计时器应在实例化后5小时启动)
+
+** AN ISO8601 repetition String (for example, R5/PT2H, indicating the timer should fire 5 times, each time waiting 2 hours)
+** ISO8601 循环时间周期 (例如, R5/PT2H, 表示总共触发5次, 每次间隔2小时)
+
 ** A String containing a cron expression
+** cron表达式指定
+
 * *Start trigger plan item/event*: reference to a plan item in the case model that triggers the start of the timer event listener
+* *Start trigger plan item/event*: 引用case模型中计划项, 用来触发计时器事件监听器的开始.
 
 Note that setting a _start trigger_ for the timer event listener does not have a visual indicator in the case model, unlike entry/exit criteria on sentries.
 
+注意 设置计时器事件监听器的 _start trigger_ 属性在case 模型中没有可视化指示, 不像入口/出口哨兵的凭证.
+
 A timer event listener is visualized as circle with a clock icon inside:
+
+计时器事件监听器看作一个圆, 里面有一个钟表图标:
+
 
 image::images/cmmn.timereventlistener.png[align="center"]
 
 ===== User Event Listener
+
+===== User Event Listener 用户事件监听器
 
 A user event listener can be used when needing to capture a user interaction that directly influences a case state,
 instead of indirectly via impacting variables or information in the case.
@@ -1053,19 +1183,35 @@ A typical use case for a user event listener are buttons in a UI that a user can
 When the event is triggered an _Occur_ event is thrown to which sentries can listener to.
 Like timer event listeners, it has a much simpler lifecycle that a _task_.
 
+一个用户事件监听器被用作捕获一个直接影响案例状态而不是间接影响变量或者案例信息的用户交互. 一个典型的例子就是界面的按钮,用户点击后改变case实例的状态.
+当 事件被触发, _Occur_ event会被抛出, 并且被哨兵所捕获. 类似计时器事件监听器, 相比任务,它也有一个更为简单的生命周期.
+
+
 image::images/cmmn.usereventlistener.png[align="center"]
 
 User event listeners can be queried using the _org.flowable.cmmn.api.runtime.UserEventListenerInstanceQuery_. Such a query can be created by calling the _cmmnRuntimeService.createUserEventListenerInstanceQuery()_ method. Note that a user event listener is also a plan item instance, which means it can also be queried through the _org.flowable.cmmn.api.runtime.PlanItemInstanceQuery_ API.
 
+用户事件监听器可以使用 _org.flowable.cmmn.api.runtime.UserEventListenerInstanceQuery_ 查询. 类似调用 the _cmmnRuntimeService.createUserEventListenerInstanceQuery()_ 方法.
+注意:也是一个计划项实例, 意味着也可以通过 the _org.flowable.cmmn.api.runtime.PlanItemInstanceQuery_ API 查询.
+
 A user event listener can be completed by calling the _cmmnRuntimeService.completeUserEventListenerInstance(id)_ method.
+
+用户事件监听器可以通过调用 _cmmnRuntimeService.completeUserEventListenerInstance(id)_ 方法来完成.
 
 ===== Generic Event Listener
 
+===== Generic Event Listener 一般事件监听器
+
 A generic event listener is used to typically model a programmatic interaction (e.g. a external system that calls out to change something in a case instance).
+
+一般事件监听器通常被用作编程交互建模(例如, 一个外部系统在一个case实例中调用来更改某些东西)
 
 image::images/cmmn.generic-event-listener.png[align="center"]
 
 The API to retrieve and complete these event listeners is on the _CmmnRuntimeService_:
+
+通过 _CmmnRuntimeService_ 来获取和完成这些事件监听器
+
 
 [source,java,linenums]
 ----
@@ -1075,13 +1221,21 @@ void completeGenericEventListenerInstance(String genericEventListenerInstanceId)
 
 Similar to _user event listeners_, this API is a wrapper on top of the _PlanItemInstance_ queries and operations. This means that the data can also be retrieved through the regular _PlanItemInstanceQuery_
 
+和  _user event listeners_ 类似, 这个 API 是 _PlanItemInstance_ 查询和操作顶部的包装. 这意味着数据也可以从  _PlanItemInstanceQuery_ 获取.
+
 Note that generic event listeners are not part of the CMMN specification, but are a Flowable-specific addition.
+
+注意 一般事件监听器不是 CMMN 规范的内容, 而是 Flowable-规范 的补充
 
 
 ===== Automatic removal of event listeners
 
+===== Automatic removal of event listeners 自动移除事件监听器
+
 The engine will automatically detect when event listeners (user or timer) are not useful anymore.
 Take for example the following case definition:
+
+引擎会自动监测不再使用的事件监听器(用户或者定时器), 例如下面的case定义:
 
 image::images/cmmn.user-event-listener-removal-1.png[align="center"]
 
@@ -1089,47 +1243,83 @@ Here, the _First stage_ contains two human tasks (A and B) and it can be exited 
 However, when both taks A and B are completed, the stage will also complete. If now the user event listener would be triggered, there is nothing that listens to this event anymore.
 The engine will detect this and terminate the user event automatically.
 
+这里, 第一个阶段,包含两个人工任务(A 和 B), 并且当停止第一个阶段事件被触发, 该阶段会被终止. 然而, 当 A 和 B 都完成后, 该阶段stage 也会完成.
+如果这个时候触发用户事件监听器, 将会不起任何作用. 此时引擎将会检测到,并自动决定该用户事件.
+
 The same mechanism also works for event listeners that are referenced by entry sentries:
+
+相同的原理, 适用于两个入口哨兵的监听器场景:
 
 image::images/cmmn.user-event-listener-removal-2.png[align="center"]
 
 In this case, in the case that _EventListenerA_ would be triggered, _EventListenerB_ is terminated (as nothing is listening to its occurrence anymore).
 
+在这种场景, 如果  _EventListenerA_ 被触发, _EventListenerB_ 会终止(因为没有任何在监听B的发生)
+
 Or, when timer and user event listeners are mixed, the one that is triggered first will also cause the removal of others (when they are not referenced somewhere else):
+
+或者, 当定时器和用户事件监听器被混合使用, 首先被触发的一个会造成其他的移除(当他们没有被别的地方引用)
 
 image::images/cmmn.user-event-listener-removal-3.png[align="center"]
 
 Here, the timer will be removed in case the user event is triggered first (and vice versa).
 
+这里, 定时器会被移除, 如果用户件事监听首先被触发.(反之亦然)
+
 The detection also takes in account plan items that have not yet been created. Take for example the following case definition:
+
+检测还考虑到尚未创建的计划项.如下图所示:
 
 image::images/cmmn.user-event-listener-removal-4.png[align="center"]
 
 Here, human task _C_ is not yet created when a case instance is started for this case definition. The user event listener will not be removed as long that _C_ has a parent stage that is in a non-terminal state, as this means that the event could still be listened to in the future.
 
+这里, 当case 实例启动后, 人工任务C还未被创建. 只要C具有处于非终止 non-terminal 状态的父级，就不会删除用户事件监听器.这意味着该事件可以在未来依然被监听
+
 ===== Available condition
+===== Available condition 可用条件
 
 All types of event listeners can be configured to have a *available condition*: an expressions that will guard the available state of the event listener. To explain the use case, take the following case definition:
+
+所有类型的事件监听器都拥有一个 *available condition*: 一个表达式用来维护事件监听器的可用状态.
 
 image::images/cmmn.create-condition.png[align="center"]
 
 When the case instance is started, Stage 1 (as it has no entry criteria) will be moving immediately from _available_ to _active_. Similar story for human task A. Human task B will move from _available_ to _enabled_ as it's manually activated.
 
+当 case实例启动后, stage 1 (没有入口凭证)将立即从可用状态变成激活状态. 人工任务A类似. 手动激活人工任务B, 它的状态从 _available_ to _enabled_.
+
 Normally, also the event listener would become _available_. The life cycle of event listeners is simpler than that of plan items such as human tasks: an event listener stays in the _available_ state until the event happens. There's no _active_ state like for other plan items.
 This means that a user could trigger it after start and the stage would be exited.
 
+正常来讲, 事件监听器状态也会变成 _available_. 事件监听器的生命周期比其他计划项(比如人工任务)简单: 事件监听器保持可用状态, 直到事件发生. 这里没有类似其他计划项一样拥有活跃状态,
+这意味着 一个用户可以在开始之后触发它, 然后stage将会退出.
+
 In some use case however, the event listener shouldn't be _available_ for the user to interact with (or a timer shouldn't start, when using a timer event listener) unless a certain condition is true.
+
+在一些场景中,除非一个明确满足true的条件, 否则事件监听器不应该可供用户交互(或者当使用定时器监听时, 一个定时器不应该开始) .
 
 In the example above, we want to only create it when the stage doesn't have any active children (or required) anymore. Setting the *availableCondition* to *${cmmn:isStageCompletable()}* will allow the event listener to be created which makes it move immediately to _available_. Concretely in this model, when human task A is completed Stage 1 becomes _completable_ (as human task B is manually activated and non-required). This makes the _availbleCondition_ of the event listener _true_ and the event listener is now available for a user to decide to exit the stage.
 
+在上述例子中, 我们想要只在该阶段没有任何活跃元素时创建它. 设置 *availableCondition* to *${cmmn:isStageCompletable()}* 将允许事件监听器被创建, 使得它状态立即变成可用.
+在这个模型中具体讲, 当人工任务 A 完成, stage 1 变成可完成(因为人工任务B是手动激活的，并且不是必需的)。这使得事件监听器的可用条件变为true, 同时用户也可以决定是否退出该阶段.
+
 Note: this is a Flowable specific addition to the CMMN specification. Without this addition, the event listener would have to be nested within a substage which is protected with entry criteria that listens to the completion of task A.
+
+注意: 这是一个 Flowable 规范对CMMN规范的特定添加.如果没有此添加，则事件监听器将必须嵌套在子阶段中，该子阶段受入口凭证监听任务 A 完成的保护。
 
 Note: if this were an autocompletable stage, the engine would complete the stage automatically when A completes.
 
+注意: 如果是一个可以自动完成的阶段stage, 引擎在A完成时, 自动完成该阶段stage.
+
 ==== Item control: Repetition Rule
+
+==== Item control: Repetition Rule 条目控制: 重复规则
 
 Plan items on the case model can have a _repetition rule_: an expression that can be used to indicate a certain plan item needs to be repeated.
 When no expression is set, but the repetition is enabled (for example, the checkbox is checked in the Flowable Modeler) or the expression is empty, a _true_ value is assumed by default.
+
+
 
 An optional _repetition counter variable_ can be set, which holds the index (one-based) of the instance. If not set, the default variable name is _repeitionCounter_.
 
