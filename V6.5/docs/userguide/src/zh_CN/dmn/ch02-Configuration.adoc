@@ -88,15 +88,15 @@ DmnEngine dmnEngine = DmnEngineConfiguration.createStandaloneInMemDmnEngineConfi
 
 这个 bean 将被用于构造 +DmnEngine+。有多个可选的类可以用来定义 +dmnEngineConfiguration+。这些类代表了不同的环境，并根据环境设置相应的默认值。最佳方式是选择最符合你的环境的类，尽可能地减少配置引擎所需要的属性。目前有下面这些类可供使用： [[configurationClasses]]
 
-* *org.flowable.dmn.engine.impl.cfg.StandaloneDmnEngineConfiguration*: the process engine is used in a standalone way. Flowable will take care of the transactions. By default, the database will only be checked when the engine boots (and an exception is thrown if there's no Flowable DMN schema or the schema version is incorrect).
-* *org.flowable.dmn.engine.impl.cfg.StandaloneInMemDmnEngineConfiguration*: this is a convenience class for unit testing purposes. Flowable DMN will take care of the transactions. An H2 in-memory database is used by default. The database will be created and dropped when the engine boots and shuts down. When using this, probably no additional configuration is needed).
-* *org.flowable.dmn.spring.SpringDmnEngineConfiguration*: To be used when the DMN engine is used in a Spring environment.  See <<springintegration,the Spring integration section>> for more information.
+* *org.flowable.dmn.engine.impl.cfg.StandaloneDmnEngineConfiguration*: 引擎以单机方式运行。Flowable 将自行处理事务。默认情况下，仅在引擎启动时检查数据库（如果 Flowable DMN 相关表不存在，或者版本不正确，将抛出异常）。
+* *org.flowable.dmn.engine.impl.cfg.StandaloneInMemDmnEngineConfiguration*: 这是一个方便进行单元测试的类。Flowable DMN 将自行处理事务。默认使用 H2 内存数据库。数据库将随着引擎的启动和关闭进行创建和销毁。使用此类时一般无需进行额外配置。
+* *org.flowable.dmn.spring.SpringDmnEngineConfiguration*: 在 Spring 环境中使用 DMN 引擎时使用此类。详见 <<springintegration,与 Spring 集成章节>>。
 
-=== Plug into Process Engine
+=== 植入到流程引擎
 
-In addition to running in standalone mode it's also possible to plug the DMN engine into the Process engine. This makes the Process engine aware of it and other engines. This enables, for example, the deployment of artifacts containing not only BPMN models, but also DMN models, to the Process engine's deployment service API.
+除了以独立方式运行，DMN 引擎还可以植入到流程引擎中。这使得流程引擎能够识别它和其他引擎。例如，除了 BPMN 模型，还可以将 DMN 模型部署到流程引擎部署服务 API。
 
-To make the Process engine aware of the DMN engine, the *org.flowable.dmn.engine.configurator.DmnEngineConfigurator* needs to be added to list of configurators in the process engine configuration.
+要让流程引擎能够识别出 DMN 引擎，需要在流程引擎配置中将 *org.flowable.dmn.engine.configurator.DmnEngineConfigurator* 添加到流程引擎配置 bean 的 configurators list 中
 
 [source,xml,linenums]
 ----
@@ -125,23 +125,23 @@ To make the Process engine aware of the DMN engine, the *org.flowable.dmn.engine
 
 [[databaseConfiguration]]
 
-=== Database configuration
+=== 数据库配置
 
-There are two ways to configure the database that the Flowable DMN engine will use. The first option is to define the JDBC properties of the database:
+Flowable DMN 引擎有两种方式进行数据库配置。第一种方式是定义数据库的 JDBC 属性：
 
-* *jdbcUrl*: JDBC URL of the database.
-* *jdbcDriver*: implementation of the driver for the specific database type.
-* *jdbcUsername*: username to connect to the database.
-* *jdbcPassword*: password to connect to the database.
+* *jdbcUrl*: 数据库的 JDBC Url。
+* *jdbcDriver*: 特定类型数据库的驱动。
+* *jdbcUsername*: 连接数据库所使用的用户名。
+* *jdbcPassword*: 连接数据库所使用的密码。
 
-The data source that is constructed based on the provided JDBC properties will have the default link:$$http://www.mybatis.org/$$[MyBatis] connection pool settings. The following attributes can optionally be set to tweak that connection pool (taken from the MyBatis documentation):
+基于所提供的 JDBC 属性构造的数据源将使用默认的 link:$$http://www.mybatis.org/$$[MyBatis] 连接池设置。下面这些可选属性可以用来对连接池进行调整（引自 Mybatis 文档）：
 
-* *jdbcMaxActiveConnections*: The maximum number of active connections that the connection pool can contain at any time. Default is 10.
-* *jdbcMaxIdleConnections*: The maximum number of idle connections that the connection pool can contain at any time.
-* *jdbcMaxCheckoutTime*: The amount of time in milliseconds a connection can be 'checked out' from the connection pool before it is forcefully returned. Default is 20000 (20 seconds).
-* *jdbcMaxWaitTime*: This is a low level setting that gives the pool a chance to print a log status and re-attempt the acquisition of a connection in the case that it is taking unusually long (to avoid failing silently forever if the pool is misconfigured) Default is 20000 (20 seconds).
+* *jdbcMaxActiveConnections*: 连接池在任意时间可以持有的最大活动连接数。
+* *jdbcMaxIdleConnections*: 连接池在任意时间可以持有的最大空闲连接数。
+* *jdbcMaxCheckoutTime*: 在被强制返回之前，连接池中的连接可被“借用”的时长（以毫秒为单位）。默认值是20000（20秒）。
+* *jdbcMaxWaitTime*: 这是一个低级别设置，使池有机会打印日志状态，并在获取连接耗时太久时进行重新尝试（以避免池配置错误时永远静默地失败）。默认值是20000（20秒）。
 
-Example database configuration:
+示例数据库配置：
 
 [source,xml,linenums]
 ----
@@ -151,7 +151,7 @@ Example database configuration:
 <property name="jdbcPassword" value="" />
 ----
 
-Our benchmarks have shown that the MyBatis connection pool is not the most efficient or resilient when dealing with a lot of concurrent requests. As such, it is advisable to us a +javax.sql.DataSource+ implementation (such as HikariCP, Tomcat JDBC Connection Pool, and so on) and inject it into the process engine configuration :
+我们的跑分显示 MyBatis 的连接池在处理大量并发请求时不是最高效的。因此，建议使用 javax.sql.DataSource 的实现（比如 HikariCP、Tomcat JDBC 连接池、等等），并将其注入到引擎配置中：
 
 [source,xml,linenums]
 ----
@@ -170,21 +170,20 @@ Our benchmarks have shown that the MyBatis connection pool is not the most effic
 
 ----
 
+要注意的是 Flowable DMN 并不自带定义这种数据源所需要的类库，所以你要确保这些类库在你的classpath中。
 
-Note that Flowable DMN does not ship with a library that allows you to define such a data source. So you have to make sure that the libraries are on your classpath.
+无论你使用 JDBC 或数据源方式，都可以设置以下属性：
 
-The following properties can be set, regardless of whether you are using the JDBC or data source approach:
-
-* *databaseType*: it's normally not necessary to specify this property as it is automatically detected from the database connection metadata. Should only be specified in case automatic detection fails. Possible values: {h2, mysql, oracle, postgres, mssql, db2}. This setting will determine which create/drop scripts and queries will be used. See <<supporteddatabases,the 'supported databases' section>> for an overview of which types are supported.
-* *databaseSchemaUpdate*: allows you to set the strategy to handle the database schema on process engine boot and shutdown.
-** +false+ (default): Checks the version of the DB schema against the library when the process engine is being created and throws an exception if the versions don't match.
-** ++true++: Upon building the process engine, a check is performed and an update of the schema is performed if it is necessary. If the schema doesn't exist, it is created.
-** ++create-drop++: Creates the schema when the process engine is being created and drops the schema when the process engine is being closed.
+* *databaseType*：一般情况下能从数据库连接中自动识别出来，没必要手工指定。应该仅当自动识别失败时指定。可选的值有：{h2、mysql、oracle、postgres、mssql、db2}。这项设置将决定使用哪些 create/drop 脚本。参见 <<supporteddatabases,“支持的数据库”章节>> 了解已支持哪些类型的数据库。
+* *databaseSchemaUpdate*：用来设置引擎启动和关闭时数据库表的操作策略。
+** +false+ （默认）：在创建引擎时检查数据库表的版本，如果不匹配则抛出异常。
+** ++true++：在构建引擎时进行检查，并在必要时更新数据库表。如果表不存在，则创建。
+** ++create-drop++：引擎创建时创建表，引擎关闭时删除表。
 
 
 [[jndiDatasourceConfig]]
 
-=== JNDI Datasource Configuration
+=== JNDI 数据源配置
 
 By default, the database configuration for Flowable DMN is contained within the db.properties files in the WEB-INF/classes of each web application. This isn't always ideal because it
 requires users to either modify the db.properties in the Flowable source and recompile the WAR file, or explode the WAR and modify the db.properties on every deployment.
