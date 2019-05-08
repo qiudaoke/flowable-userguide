@@ -275,15 +275,13 @@ Flowable DMN 的表名全部以 *ACT_DMN_* 开头。
 [[databaseUpgrade]]
 
 
-=== Database upgrade
+=== 数据库升级
 
-Make sure you make a backup of your database (using your database backup capabilities) before you run an upgrade.
+请确保在升级前已对数据库进行备份。
 
+每当引擎被创建时默认都会进行版本检查。版本检查通常在你的应用程序或者 Flowable web 应用启动时发生。如果 Flowable 库发现库版本和数据库表版本不同，则抛出异常。
 
-By default, a version check will be performed each time a process engine is created. This typically happens once at boot time of your application or the Flowable webapps. If the Flowable library notices a difference between the library version and the version of the Flowable database tables, then an exception is thrown.
-
-
-To upgrade, you have to start by putting the following configuration property in your flowable.dmn.cfg.xml configuration file:
+要进行升级，你首先需要在 flowable.dmn.cfg.xml 配置文件中加入如下配置属性：
 
 [source,xml,linenums]
 ----
@@ -298,13 +296,12 @@ To upgrade, you have to start by putting the following configuration property in
 </beans>
 ----
 
-*Also, include a suitable database driver for your database in the classpath.* Upgrade the Flowable DMN libraries in your application. Or start up a new version of Flowable DMN and point it to a database that contains an older version.  With +databaseSchemaUpdate+ set to +true+, Flowable DMN will automatically upgrade the DB schema to the newer version the first time when it notices that libraries and DB schema are out of sync.
-
+*另外，在classpath中引入适合你数据库的驱动。* 升级应用程序中的 Flowable DMN 类库，或者启动一个新版本的 Flowable DMN 并将其指向旧版本的数据库。当 databaseSchemaUpdate 设置为 true 时，Flowable DMN 将会在首次发现类库版本和数据库表版本不同时升级到新版本。
 
 [[processDefinitionCacheConfiguration]]
 
 
-=== Deployment cache configuration
+=== 部署缓存配置
 
 All decisions are cached (after they're parsed) to avoid hitting the database every time a decision table is needed and because decision table data doesn't change. By default, there is no limit on this cache. To limit the decisions cache, add following property
 
