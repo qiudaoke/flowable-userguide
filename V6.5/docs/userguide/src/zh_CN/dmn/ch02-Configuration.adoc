@@ -303,17 +303,16 @@ Flowable DMN 的表名全部以 *ACT_DMN_* 开头。
 
 === 部署缓存配置
 
-All decisions are cached (after they're parsed) to avoid hitting the database every time a decision table is needed and because decision table data doesn't change. By default, there is no limit on this cache. To limit the decisions cache, add following property
+为了避免每次需要决策表时都去访问数据库，同时也因为决策表不会改变，所有的决策都是被缓存的（在它们经过解析之后）。缓存默认是没有限制的。可添加如下属性对决策缓存进行限制：
 
 [source,xml,linenums]
 ----
 <property name="decisionCacheLimit" value="10" />
 ----
 
+这项设置将使用给定了硬性限制的 LRU 缓存替代默认的 hashmap 缓存。当然，最合适的取值取决于决策总数以及运行时实际使用到的决策数。
 
-Setting this property will swap the default hashmap cache with a LRU cache that has the provided hard limit. Of course, the best value for this property depends on the total amount of decisions stored and the number of decisions actually used at runtime.
-
-You can also inject your own cache implementation. This must be a bean that implements the org.flowable.dmn.engine.impl.persistence.deploy.DeploymentCache interface:
+你还可以注入你自己的缓存实现。必须是一个实现了 org.flowable.dmn.engine.impl.persistence.deploy.DeploymentCache 接口的 bean：
 
 [source,xml,linenums]
 ----
@@ -324,10 +323,9 @@ You can also inject your own cache implementation. This must be a bean that impl
 
 [[strictMode]]
 
-=== Strict mode
+=== 严格模式
 
-By default strict mode is *enabled*. This means that the hit policies will act as described in the DMN 1.1 spec.
-It is however possible to disable strict mode. 
+严格模式是默认 *启用* 的。就是说命中策略（hit policies）将按照 DMN 1.1 标准执行。也可以禁用严格模式。
 
 [source,xml,linenums]
 ----
@@ -342,13 +340,11 @@ It is however possible to disable strict mode.
 </beans>
 ----
 
-The effect will be that a result will not be invalidated when a hit policy constraint is violated. A possible violation will be logged in the audit log as a validation message.
+这样做的影响是违反了命中策略约束时，结果不会作废。可能的违规将被作为验证信息记录到审核日志中。
 
+=== 自定义 Flowable 函数委托（Function Delegates）
 
-
-=== Custom Flowable Function Delegates
-
-Flowable DMN provides some built-in JUEL Function Delegates. By setting the *customFlowableFunctionDelegates* property on the dmnEngineConfiguration bean you can provide own. These can be used in expressions to execute your own logic.
+Flowable DMN 内置了一些 JUEL 函数委托。通过设置 dmnEngineConfiguration bean 的 *customFlowableFunctionDelegates* 属性，你可以使用自己的实现。这些（函数委托）可以在表达式（expressions）中执行你自己的逻辑。
 
 [source,xml,linenums]
 ----
@@ -371,19 +367,18 @@ Flowable DMN provides some built-in JUEL Function Delegates. By setting the *cus
 </beans>
 ----
 
-Note that the custom Function Delegates must extend from org.flowable.engine.common.impl.el.AbstractFlowableFunctionDelegate.
-
+请注意，自定义函数委托必须继承自 org.flowable.engine.common.impl.el.AbstractFlowableFunctionDelegate。
 
 [[loggingConfiguration]]
 
 
-=== Logging
+=== 日志
 
-All logging (flowable, spring, mybatis, ...) is routed through SLF4J and allows the selection of the logging-implementation of your choice.
+所有日志（flowable、spring、mybatis、...）都通过 slf4j 门面进行记录，所以你可以自行选择日志框架。
 
-*By default no SFL4J-binding JAR is present in the flowable-engine dependencies; this should be added in your project in order to use the logging framework of your choice.* If no implementation JAR is added, SLF4J will use a NOP-logger, not logging anything at all, other than a warning that nothing will be logged. For more information on these bindings link:$$http://www.slf4j.org/codes.html#StaticLoggerBinder$$[http://www.slf4j.org/codes.html#StaticLoggerBinder].
+*flowable 引擎依赖项中默认没有包含具体的日志实现框架；你应该将你选择的日志框架添加到你的项目中。* 如果没有引入日志实现框架的 jar 包，slf4j 不会记录任何日志，只会给出一个不会记录任何内容的警告。
 
-With Maven, for example, add a dependency like this (here using log4j), note that you still need to add a version:
+举个例子，使用 maven 时，像这样添加依赖（以使用 log4j 为例），请注意这里省略了版本：
 
 [source,xml,linenums]
 ----
@@ -393,13 +388,11 @@ With Maven, for example, add a dependency like this (here using log4j), note tha
 </dependency>
 ----
 
+flowable-ui 和 flowable-rest webapps 使用 log4j。运行所有的 flowable-* mudules 测试时同样使用 log4j。
 
-The flowable-ui and flowable-rest webapps are configured to use Log4j-binding. Log4j is also used when running the tests for all the flowable-* modules.
+*所用容器的 classpath 中带有 commons-logging 时的重要注意事项：* 为了能通过 slf4j 能调用到 spring-logging，使用了一个桥（a bridge is used）（详见 link:$$http://www.slf4j.org/legacy.html#jclOverSLF4J$$[http://www.slf4j.org/legacy.html#jclOverSLF4J]）。如果你的容器提供了 commons-logging 实现，请按此页面的说明进行操作，以确保稳定：link:$$http://www.slf4j.org/codes.html#release$$[http://www.slf4j.org/codes.html#release]。
 
-
-*Important note when using a container with commons-logging in the classpath:* In order to route the spring-logging through SLF4J, a bridge is used (see link:$$http://www.slf4j.org/legacy.html#jclOverSLF4J$$[http://www.slf4j.org/legacy.html#jclOverSLF4J]). If your container provides a commons-logging implementation, please follow directions on this page: link:$$http://www.slf4j.org/codes.html#release$$[http://www.slf4j.org/codes.html#release] to ensure stability.
-
-Example when using Maven (version omitted):
+Maven 示例（忽略了版本）:
 
 [source,xml,linenums]
 ----
