@@ -42,13 +42,25 @@ When expressions or scripts use Spring beans, those beans have to be available t
 
 CMMN doesn't have a notion of versioning.  That is actually good, because the executable CMMN file will probably live in a version control system repository (such as Subversion, Git or Mercurial) as part of your development project.  However, versions of case definitions are created in the engine as part of deployment. During deployment, Flowable will assign a version to the +CaseDefinition+ before it is stored in the Flowable DB.
 
+CMMN没有版本控制的概念，这实际上很好，因为可执行CMMN文件可能作为开发项目的一部分存在于版本控制系统库中（如Subversion、Git或Mercurial）。但是，案例定义的版本是作为部署的一部分在引擎中创建的。在部署过程中，flowable将为CaseDefinition分配一个版本，然后将其存储在flowable数据库中
+
 For each case definition in a deployment, the following steps are performed to initialize the properties +key+, +version+, +name+ and ++id++:
 
+对于部署中的每个案例定义，执行以下步骤初始化属性键、版本、名称和ID：
+
 * The case definition +id+ attribute in the XML file is used as the case definition +key+ property.
+
+* XML文件中的案例定义+id+属性,用作案例定义+key+属性。
+
 * The case definition +name+ attribute in the XML file is used as the case definition +name+ property. If the name attribute is not specified, then the id attribute is used as the name.
+
+* XML文件中的案例定义+名称+属性用作案例定义+名称+属性。如果未指定名称属性，则使用id属性作为名称。
+
 * The first time a case with a particular key is deployed, version 1 is assigned.  For all subsequent deployments of case definitions with the same key, the version will be set 1 higher than the highest currently deployed version. The key property is used to distinguish case definitions.
 
-CMMN没有版本控制的概念，这实际上很好，因为可执行CMMN文件可能作为开发项目的一部分存在于版本控制系统库中（如Subversion、Git或Mercurial）。但是，案例定义的版本是作为部署的一部分在引擎中创建的。在部署过程中，flowable将为CaseDefinition分配一个版本，然后将其存储在flowable数据库中
+* 第一次部署具有特定密钥的案例时，将分配版本1。对于具有相同键的案例定义的所有后续部署版本，版本将设置为比当前部署的最高版本高1。key属性用于区分大小写定义。
+
+
 
 
 
@@ -117,7 +129,7 @@ The table will look like this:
 
 Note how the key for the new case is different from our first case. Even though the name is the same (we should probably have changed that too), Flowable only considers the +id+ attribute when distinguishing cases. The new case is therefore deployed with version 1.
 
-请注意：新案例的关键与第一个案例有何不同？尽管名称是相同的（我们可能也应该更改它），但在区分大小写时，Flowable只考虑ID属性。因此，新案例会与版本1一起部署。
+请注意：新案例的关键与第一个案例有何不同？尽管名称是相同的（我们可能也该更改它），但在区分大小写时，Flowable只考虑ID属性。因此，新案例会与版本1一起部署。
 
 [[deploymentCategory]]
 
