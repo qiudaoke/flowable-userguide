@@ -22,6 +22,7 @@
 
 === 自动部署资源
 集成Spring还具有部署资源的特性。在配置表单引擎时，您可以指定一组资源.当表单引擎被创建时，将扫描和部署这些资源并过滤防止重复部署。只有资源被更改时，才会将重新部署部署到Flowable 表单数据库.这在经常重启包含大量表单资源的Spring容器中具有很大的意义（例如，测试）
+
 例如:
 [source,xml,linenums]
 ----
@@ -38,6 +39,7 @@
 
 默认情况下，上面的配置会将匹配过滤后的所有资源进行分组并单独部署到Flowable 表单引擎中,在整个部署过程中重复过滤以防止重新部署未更改的资源.在某些情况下，你可能并不想这么做.例如，如果以这种方式部署一组表单资源，并且这些资源中只有一个表单定义更改了，整个流程定义部署将被视为新的并且被重新部署,尽管实际上只改变了一个但是每个表单都被定义为了新的版本,
 为了能够自定义部署的方式，您可以在 +SpringFormEngineConfiguration+ 中，指定 +deploymentMode+ 属性。该属性定义了从过滤器匹配的资源集合以及确定部署的方式。默认情况下，该属性提供3个默认属性：
+
 * ++default++: 将所有资源分组到单个部署中，并对该部署应用重复过滤。如果您未指定其他值，将默认使用它。
 * ++single-resource++: 为每个单独的资源单独部署，并对该部署应用重复过滤。适用于单独部署某个已更改表单定义的资源，仅创建该表单定义的新版本。
 * ++resource-parent-folder++: 为共享同一父文件夹的资源创建单独的部署，并对该部署应用重复过滤。适用于为大多数资源创建单独的部署，但仍可以通过将它们放在共享文件夹中来对其进行分组。以下是为 ++deploymentMode++ 属性指定 +single-resource+ 配置的示例：
@@ -58,8 +60,9 @@
 
 === 单元测试
 
-与Spring集成时，当适用标准的<<apiUnitTesting,Flowable testing facilities>>来测试表单将会变得非常简单.
+与Spring集成时，使用标准的<<apiUnitTesting,Flowable testing facilities>>来测试表单将会变得非常简单.
 以下示例展示了如何在基于Spring的JUnit 4和5测试中测试表单：
+
 .JUnit 5 测试
 [source,java,linenums]
 ----
@@ -86,6 +89,7 @@ public class SpringJunit4Test {
 ----
 
 使用 +FlowableFormSpringExtension+ 时允许使用 +Deployment+ 注解。
+
 .JUnit 4 测试
 [source,java,linenums]
 ----
