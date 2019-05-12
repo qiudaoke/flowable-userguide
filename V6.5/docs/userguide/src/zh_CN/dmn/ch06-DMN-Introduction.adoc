@@ -17,7 +17,7 @@ Decision Model & Notation(DMN)是由link:$$http://www.omg.org/spec/DMN/1.1$$[对
 === 什么是DMN定义？
 
 
-DMN 1.1模式的根元素是**definitions**。在这个项目中可以定义多个决策定义(尽管我们建议每个文件中只有一个决策定义，这可以简化开发过程的后期维护)。每个决策可以定义一个表达式。目前，Flowable支持几种表达式类型中的**decision table**。
+DMN 1.1模式的根元素是**definitions**。在这个项目中可以定义多个决策定义(尽管我们建议每个文件中只有一个决策定义，这可以简化开发过程的后期维护)。每个决策可以定义一个表达式。目前，Flowable支持几种表达式类型中的**决策表**。
 
 [source,xml,linenums]
 ----
