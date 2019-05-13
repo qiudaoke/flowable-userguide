@@ -1,22 +1,24 @@
 [[chDeployment]]
 
-== Deployment
+== 部署
 
-=== Business archives
+[[_business_archives]]
+=== 业务存档
 
-To deploy processes, they have to be wrapped in a business archive (BAR).  A business archive is the unit of deployment to a Flowable engine. A business archive is equivalent to a ZIP file.  It can contain  BPMN 2.0 processes, form definitions, DMN rules and any other type of file. In general, a business archive contains a collection of named resources.
+要部署流程，需要将它们包装在业务存档(BAR, Business archive)里。业务存档是Flowable引擎的部署单元，也就是一个ZIP文件。可以包含BPMN 2.0流程、表单定义、DMN规则，与其他类型的文件。总的来说，业务存档包含一组具名资源。
 
-When a business archive is deployed, it is scanned for BPMN files with a +.bpmn20.xml+ or +.bpmn+ extension. Each of those will be processed and may contain multiple process definitions.
-When the DMN engine is activated,  +.dmn+ files are also parsed, and with the form engine activated, +.form+ files are handled.
+当部署业务存档时，会扫描具有++.bpmn20.xml++或++.bpmn++扩展名的BPMN文件。每一个这种文件都会被处理，并可以包含多个流程定义。
+当启用DMN引擎时，也会解析++.dmn++。当启用表单引擎时，会处理++.form++文件。
 
 [NOTE]
 ====
-Java classes present in the business archive *will not be added to the classpath*. All custom classes used in process definitions in the business archive (for example, Java service tasks or event listener implementations) must be made available on the Flowable engine classpath in order to run the processes.
+业务存档中的Java类**不会添加至classpath**。业务存档中，所有流程定义使用的自定义类（例如Java服务任务或者事件监听器），都需要放在运行流程的flowable引擎的classpath内。
 ====
 
-==== Deploying programmatically
+[[_deploying_programmatically]]
+==== 编程方式部署
 
-Deploying a business archive from a ZIP file can be done like this:
+从ZIP文件部署业务存档，可以这样做：
 
 [source,java,linenums]
 ----
@@ -30,44 +32,47 @@ repositoryService.createDeployment()
 
 ----
 
-It's also possible to build a deployment from individual resources. See the javadocs for more details.
+也可以为单个资源构建部署。查看javadoc以获取更多信息。
 
-=== External resources
+[[_external_resources]]
+=== 外部资源
 
-Process definitions live in the Flowable database. These process definitions can reference delegation classes when using Service Tasks or execution listeners or Spring beans from the Flowable configuration file. These classes and the Spring configuration file have to be available to all process engines that may execute the process definitions.
+流程定义保存在Flowable数据库中。这些流程定义在使用服务任务、执行监听器，或执行Flowable配置文件中定义的Spring bean时，可以引用委托类。这些类及Spring配置文件都需要在可能运行这个流程定义的流程引擎中可用。
 
-==== Java classes
+[[_java_classes]]
+==== Java类
 
-All custom classes that are used in your process (for example, JavaDelegates used in Service Tasks or event-listeners, TaskListeners and so on) should be present on the engine's classpath when an instance of the process is started.
+在流程启动时，引擎的classpath中需要有所有流程中用到的自定义类（例如服务任务、事件监听器、任务监听器等中用到的JavaDelegate）。
 
-During deployment of a business archive however, those classes don't have to be present on the classpath. This means that your delegation classes don't have to be on the classpath when deploying a new business archive with Ant, for example.
+但是在部署业务存档时，classpath中可以没有这些类。这意味着，比如使用Ant部署新业务存档时，代理类不必提前放在classpath中。
 
-When you are using the demo setup and you want to add your custom classes, you should add a JAR containing your classes to the flowable-task or flowable-rest webapp lib. Don't forget to include the dependencies of your custom classes (if any) as well. Alternatively, you can include your dependencies in the libraries directory of your Tomcat installation, +${tomcat.home}/lib+.
+当使用演示配置且希望添加自定义类时，需要在flowable-task或flowable-rest的webapp lib中，添加包含有你的自定义类的JAR。别忘了也要添加你的自定义类的依赖（若有）。或者，也可以将你的依赖添加到Tomcat的库文件夹++${tomcat.home}/lib++中。
 
+[[_using_spring_beans_from_a_process]]
+==== 在流程中使用Spring bean
 
-==== Using Spring beans from a process
+在表达式或脚本中使用Spring bean时，执行该流程定义的引擎需要可以使用这些bean。可以简单直接地自行构建web应用，并按照<<springintegration,集成Spring>>章节的介绍在上下文中配置流程引擎。但也请牢记在心，如果使用Flowable task和rest web应用，就需要更新它的上下文配置。
 
-When expressions or scripts use Spring beans, those beans have to be available to the engine when executing the process definition. If you are building your own webapp and you configure your process engine in your context as described in <<springintegration,the spring integration section>>, that is straightforward. But bear in mind that you also should update the Flowable task and rest webapps with that context if you use it.
+[[_creating_a_single_app]]
+==== 创建单独应用
 
-==== Creating a single app
+如果不想费心在所有流程引擎的classpath中都包含所有需要的代理类，及保证它们都使用了正确的Spring配置，也可以考虑将Flowable rest web应用嵌入你自己的web应用。也就是说只使用一个单独的++ProcessEngine++。
 
-Instead of making sure that all process engines have all the delegation classes on their classpath and use the right Spring configuration, you may consider including the Flowable REST webapp inside your own webapp so that there is only a single +ProcessEngine+.
 
 [[versioningOfProcessDefinitions]]
 
+=== 流程定义的版本
 
-=== Versioning of process definitions
+BPMN并没有版本的概念。这其实很好，因为可执行的BPMN流程文件很可能已经作为开发项目的一部分，保存在版本管理系统仓库中了（例如Subversion，Git，或者Mercurial）。但是，作为部署过程的一部分，引擎会创建流程定义的版本。在部署时，Flowable会在保存至Flowable数据库前，为++ProcessDefinition++指定版本。
 
-BPMN doesn't have a notion of versioning.  That is actually good, because the executable BPMN process file will probably live in a version control system repository (such as Subversion, Git or Mercurial) as part of your development project.  However, versions of process definitions are created in the engine as part of deployment. During deployment, Flowable will assign a version to the +ProcessDefinition+ before it is stored in the Flowable DB.
+对于业务存档中的每个流程定义，为了初始化++key++、++version++、++name++与++id++参数，会执行下列步骤：
 
-For each process definition in a business archive, the following steps are performed to initialize the properties +key+, +version+, +name+ and ++id++:
+* XML文件中的流程定义++id++属性用作流程定义的++key++参数。
+* XML文件中的流程定义++name++属性用作流程定义的++name++参数。如果未给定++name++属性，会使用id作为name。
+* 当每个key的流程第一次部署时，指定版本为1。对其后所有使用相同key的流程定义，部署时版本会在该key当前已部署的最高版本号基础上加1。key参数用于区分流程定义。
+* id参数设置为{processDefinitionKey}:{processDefinitionVersion}:{generated-id}，其中++generated-id++是一个唯一数字，用以保证在集群环境下，流程定义缓存中，流程id的唯一性。
 
-* The process definition +id+ attribute in the XML file is used as the process definition +key+ property.
-* The process definition +name+ attribute in the XML file is used as the process definition +name+ property. If the name attribute is not specified, then the id attribute is used as the name.
-* The first time a process with a particular key is deployed, version 1 is assigned.  For all subsequent deployments of process definitions with the same key, the version will be set 1 higher than the highest currently deployed version. The key property is used to distinguish process definitions.
-* The id property is set to {processDefinitionKey}:{processDefinitionVersion}:{generated-id}, where +generated-id+ is a unique number added to guarantee uniqueness of the process ID for the process definition caches in a clustered environment.
-
-Take for example the following process
+以下面的流程为例
 
 [source,xml,linenums]
 ----
@@ -76,7 +81,7 @@ Take for example the following process
     ...
 ----
 
-When deploying this process definition, the process definition in the database will look like this:
+当部署这个流程定义时，数据库中的流程定义会是这个样子：
 
 [options="header"]
 |===============
@@ -85,7 +90,8 @@ When deploying this process definition, the process definition in the database w
 
 |===============
 
-Suppose we now deploy an updated version of the same process (for example, changing some user tasks), but the ++id++ of the process definition remains the same. The process definition table will now contain the following entries:
+如果我们现在部署同一个流程的更新版本（例如修改部分用户任务），且保持流程定义的++id++不变，那么流程定义表中会包含下面的记录：
+
 
 [options="header"]
 |===============
@@ -95,9 +101,9 @@ Suppose we now deploy an updated version of the same process (for example, chang
 
 |===============
 
-When the ++runtimeService.startProcessInstanceByKey("myProcess")++ is called, it will now use the process definition with version ++2++, as this is the latest version of the process definition.
+当调用++runtimeService.startProcessInstanceByKey("myProcess")++时，会使用版本++2++的流程定义，因为这是这个流程定义的最新版本。
 
-Should we create a second process, as defined below and deploy this to Flowable, a third row will be added to the table.
+如果再创建第二个流程，如下定义并部署至Flowable，表中会增加第三行。
 
 [source,xml,linenums]
 ----
@@ -106,7 +112,7 @@ Should we create a second process, as defined below and deploy this to Flowable,
     ...
 ----
 
-The table will look like this:
+表数据类似：
 
 [options="header"]
 |===============
@@ -117,22 +123,23 @@ The table will look like this:
 
 |===============
 
-Note how the key for the new process is different from our first process. Even though the name is the same (we should probably have changed that too), Flowable only considers the +id+ attribute when distinguishing processes. The new process is therefore deployed with version 1.
+请注意新流程的key与第一个流程的key不同。即使name是相同的（我们也可以修改它），Flowable也只用++id++属性来区分流程。因此新的流程部署时版本为1.
+
 
 [[providingProcessDiagram]]
 
 
-=== Providing a process diagram
+=== 提供流程图
 
-A process diagram image can be added to a deployment. This image will be stored in the Flowable repository and is accessible through the API. This image is also used to visualize the process in Flowable apps.
+可以在部署中添加流程图片。这个图片将存储在Flowable数据库中，并可以使用API访问。图片可以用在Flowable应用中，使流程可视化。
 
-Suppose we have a process on our classpath, +org/flowable/expenseProcess.bpmn20.xml+ that has a process key 'expense'. The following naming conventions for the process diagram image apply (in this specific order):
+如果在classpath中，有一个++org/flowable/expenseProcess.bpmn20.xml++流程，key为'expense'。则流程图片会使用下列命名约定（按顺序）：
 
-* If an image resource exists in the deployment that has a name of the BPMN 2.0 XML file name concatenated with the process key and an image suffix, this image is used. In our example, this would be +org/flowable/expenseProcess.expense.png+ (or .jpg/gif). In case you have multiple images defined in one BPMN 2.0 XML file, this approach makes most sense. Each diagram image will then have the process key in its file name.
-* If no such image exists, am image resource in the deployment matching the name of the BPMN 2.0 XML file is searched for. In our example this would be +org/flowable/expenseProcess.png+. Note that this means that *every process definition* defined in the same BPMN 2.0 file has the same process diagram image. In case there is only one process definition in each BPMN 2.0 XML file, this is obviously not a problem.
+* 如果部署中有图片资源，并且文件名包含BPMN 2.0 XML流程定义文件名以及流程key，并具有图形格式，则使用这个图片。在我们的例子中，就是++org/flowable/expenseProcess.expense.png++（或者.jpg/gif）。使用key的原因是，一个BPMN 2.0 XML文件中可以有多个流程定义。因此使用流程key区分每一个流程图的文件。
+* 如果没有这种图片，就会寻找部署中匹配BPMN 2.0 XML文件名的图片资源。在我们的例子中，就是++org/flowable/expenseProcess.png++。请注意，这意味着同一个BPMN 2.0文件中的**每一个流程定义**，都会使用同一个流程图图片。当然，如果每个BPMN 2.0 XML文件中都只有一个流程定义，就没有问题。
 
 
-Example when deploying programmatically:
+用编程方式部署的例子：
 
 [source,java,linenums]
 ----
@@ -145,7 +152,7 @@ repositoryService.createDeployment()
 ----
 
 
-The image resource can be retrieved through the API afterwards:
+图片资源可用下面的API获取：
 
 [source,java,linenums]
 ----
@@ -162,31 +169,31 @@ InputStream imageStream = repositoryService.getResourceAsStream(
 [[generatingProcessDiagram]]
 
 
-=== Generating a process diagram
+=== 生成流程图
 
-If no image is provided in the deployment, as described in the <<providingProcessDiagram,previous section>>, the Flowable engine will generate a process diagram image if the process definition contains the necessary 'diagram interchange' information.
+如果部署时没有按<<providingProcessDiagram,上小节>>介绍的方式提供图片，且流程定义中包含必要的“图形交换(diagram interchange)”信息，Flowable引擎会生成流程图。
 
-The resource can be retrieved in exactly the same way as when <<providingProcessDiagram, an image is provided>> in the deployment.
+可以用与部署时<<providingProcessDiagram, 提供图片>>完全相同的方法获取图片资源。
 
 image::images/deployment.image.generation.png[align="center"]
 
-If, for some reason, it's not necessary or desirable to generate a diagram during deployment, the +isCreateDiagramOnDeploy+ property can be set on the process engine configuration:
+如果不需要或不希望在部署时生成流程图，可以在流程引擎配置中设置++isCreateDiagramOnDeploy++参数：
 
 [source,xml,linenums]
 ----
 <property name="createDiagramOnDeploy" value="false" />
 ----
 
-No diagram will be generated now.
+这样就不会生成流程图了。
 
 [[deploymentCategory]]
 
 
-=== Category
+=== 类别
 
-Both deployments and process definitions have user-defined categories.  The process definition category is initialized with the value of the targetNamespace attribute in the BPMN XML: +<definitions ... targetNamespace="yourCategory" ...+
+部署与流程定义都可以自定义类别。流程定义的类别使用BPMN文件中targetNamespace的值设置：++<definitions ... targetNamespace="yourCategory" .../>++。
 
-The deployment category can also be specified in the API like this:
+部署的类别也可用API如此设定：
 
 [source,java,linenums]
 ----

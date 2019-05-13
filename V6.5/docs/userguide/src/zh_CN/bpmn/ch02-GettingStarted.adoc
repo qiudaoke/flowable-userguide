@@ -1,60 +1,62 @@
+[[_getting_started]]
+== 开始
 
-== Getting Started
+[[_what_is_flowable]]
+=== Flowable是什么？
 
-=== What is Flowable?
+Flowable是一个使用Java编写的轻量级业务流程引擎。Flowable流程引擎可用于部署BPMN 2.0流程定义（用于定义流程的行业XML标准），
+创建这些流程定义的流程实例，进行查询，访问运行中或历史的流程实例与相关数据，等等。这个章节将用一个可以在你自己的开发环境中使用的例子，逐步介绍各种概念与API。
 
-Flowable is a light-weight business process engine written in Java. The Flowable process engine allows you to deploy BPMN 2.0 process definitions (an industry XML standard for defining processes), 
-creating process instances of those process definitions, running queries, accessing active or historical process instances and related data, plus much more. This section will gradually introduce various concepts and 
-APIs to do that through examples that you can follow on your own development machine.
+Flowable可以十分灵活地加入你的应用/服务/构架。可以将JAR形式发布的Flowable库加入应用或服务，来__嵌入__引擎。
+以JAR形式发布使Flowable可以轻易加入任何Java环境：Java SE；Tomcat、Jetty或Spring之类的servlet容器；JBoss或WebSphere之类的Java EE服务器，等等。
+另外，也可以使用Flowable REST API进行HTTP调用。也有许多Flowable应用（Flowable Modeler, Flowable Admin, Flowable IDM 与 Flowable Task），提供了直接可用的UI示例，可以使用流程与任务。
 
-Flowable is extremely flexible when it comes to adding it to your application/services/architecture. You can _embed_ the engine in your application or service by including the Flowable library, 
-which is available as a JAR. Since it's a JAR, you can add it easily to any Java environment: Java SE; servlet containers, such as Tomcat or Jetty, Spring; Java EE servers, such as JBoss or WebSphere, and so on.
-Alternatively, you can use the Flowable REST API to communicate over HTTP. There are also several Flowable Applications (Flowable Modeler, Flowable Admin, Flowable IDM and Flowable Task) that offer out-of-the-box example UIs for working with processes and tasks.
+所有使用Flowable方法的共同点是核心引擎。核心引擎是一组服务的集合，并提供管理与执行业务流程的API。
+下面的教程从设置与使用核心引擎的介绍开始。后续章节都建立在之前章节中获取的知识之上。
 
-Common to all the ways of setting up Flowable is the core engine, which can be seen as a collection of services that expose APIs to manage and execute business processes. 
-The various tutorials below start by introducing how to set up and use this core engine. The sections afterwards build upon the knowledge acquired in the previous sections.
+* <<getting.started.command.line, 第一节>>展示了以最简单的方式运行Flowable的方法：只使用Java SE的标准Java main方法。这里也会介绍许多核心概念与API。
+* <<getting.started.rest, Flowable REST API>>章节展示了如何通过REST运行及使用相同的API。
+* <<getting.started.flowable.app, Flowable APP>>章节将介绍直接可用的Flowable UI示例的基本方法。
 
-* The <<getting.started.command.line, first section>> shows how to run Flowable in the simplest way possible: a regular Java main using only Java SE. Many core concepts and APIs will be explained here.
-* The <<getting.started.rest, section on the Flowable REST API>> shows how to run and use the same API through REST.
-* The <<getting.started.flowable.app, section on the Flowable App>>, will guide you through the basics of using the out-of-the-box example Flowable user interfaces.
+[[_flowable_and_activiti]]
+=== Flowable与Activiti
 
-=== Flowable and Activiti
-
-Flowable is a fork of Activiti (registered trademark of Alfresco). In all the following sections you’ll notice that the package names, configuration files, and so on, use _flowable_.
+Flowable是Activiti(Alfresco持有的注册商标)的fork。在下面的章节中，你会注意到包名，配置文件等等，都使用__flowable__。
 
 [[getting.started.command.line]]
-=== Building a command-line application
+=== 构建命令行程序
 
-==== Creating a process engine
+[[_creating_a_process_engine]]
+==== 创建流程引擎
 
-In this first tutorial we're going to build a simple example that shows how to create a Flowable process engine, introduces some core concepts and shows how to work with the API. 
-The screenshots show Eclipse, but any IDE works. We'll use Maven to fetch the Flowable dependencies and manage the build, but likewise, any alternative also works (Gradle, Ivy, and so on).
+在这个初步教程中，将构建一个简单的例子，以展示如何创建一个Flowable流程引擎，介绍一些核心概念，并展示如何使用API。
+截图时使用的是Eclipse，但实际上可以使用任何IDE。我们使用Maven获取Flowable依赖及管理构建，但是类似的任何其它方法也都可以使用（Gradle，Ivy，等等）。
 
-The example we'll build is a simple _holiday request_ process:
+我们将构建的例子是一个简单的__请假(holiday request)__流程：
 
-* the _employee_ asks for a number of holidays
-* the _manager_ either approves or rejects the request
-* we'll mimic registering the request in some external system and sending out an email to the employee with the result
+* __雇员(employee)__申请几天的假期
+* __经理(manager)__批准或驳回申请
+* 我们会模拟将申请注册到某个外部系统，并给雇员发送结果邮件
 
-First, we create a new Maven project through _File -> New -> Other -> Maven Project_
+首先，通过__File -> New -> Other -> Maven Project__创建一个新的Maven项目
 
 image::images/getting.started.new.maven.png[align="center"]
 
-In the next screen, we check '_create a simple project (skip archetype selection)_'
+在下一界面中，选中'__create a simple project (skip archetype selection)__'
 
 image::images/getting.started.new.maven2.png[align="center"]
 
-And fill in some _'Group Id'_ and _'Artifact id'_:
+填入__'Group Id'__与__'Artifact id'__:
 
 image::images/getting.started.new.maven3.png[align="center"]
 
-We now have an empty Maven project, to which we'll add two dependencies:
+这样就建立了空的Maven项目，然后添加两个依赖：
 
-* The Flowable process engine, which will allow us to create a ProcessEngine object and access the Flowable APIs.
-* An in-memory database, H2 in this case, as the Flowable engine needs a database to store execution and historical data while running process instances. 
-Note that the H2 dependency includes both the database _and_ the driver. If you use another database (for example, PostgresQL, MySQL, and so on), you'll need to add the specific database driver dependency.
+* Flowable流程引擎。使我们可以创建一个ProcessEngine流程引擎对象，并访问Flowable API。
+* 一个内存数据库。本例中为H2，因为Flowable引擎在运行流程实例时，需要使用数据库来存储执行与历史数据。
+请注意H2依赖包含了数据库__及__驱动。如果使用其他数据库（例如PostgreSQL，MySQL等），需要添加对应的数据库驱动依赖。
 
-Add the following to your _pom.xml_ file:
+在__pom.xml__文件中添加下列行：
 
 [source,xml,linenums]
 ----
@@ -62,7 +64,7 @@ Add the following to your _pom.xml_ file:
   <dependency>
     <groupId>org.flowable</groupId>
     <artifactId>flowable-engine</artifactId>
-    <version>6.5.0-SNAPSHOT</version>
+    <version>6.3.0</version>
   </dependency>
   <dependency>
     <groupId>com.h2database</groupId>
@@ -72,10 +74,10 @@ Add the following to your _pom.xml_ file:
 </dependencies>
 ----
 
-If the dependent JARs are not automatically retrieved for some reason, you can right-click the project and select '_Maven -> Update Project'_ to force a manual refresh (but this should not be needed, normally). 
-In the project, under '_Maven Dependencies_', you should now see the _flowable-engine_ and various other (transitive) dependencies.
+如果由于某些原因，依赖JAR无法自动获取，可以右键点击项目，并选择'__Maven -> Update Project__'以强制手动刷新（一般不会需要这么操作）。
+在这个项目中的'__Maven Dependencies__'下，可以看到__flowable-engine__与许多其他（传递的）依赖。
 
-Create a new Java class and add a regular Java main method:
+创建一个新的Java类，并添加标准的Java main方法：
 
 [source,java,linenums]
 ----
@@ -90,10 +92,10 @@ public class HolidayRequest {
 }
 ----
 
-The first thing we need to do is to instantiate a *ProcessEngine* instance. This is a thread-safe object that you typically have to instantiate only once in an application. 
-A _ProcessEngine_ is created from a *ProcessEngineConfiguration* instance, which allows you to configure and tweak the settings for the process engine. Often, the _ProcessEngineConfiguration_ is created 
-using a configuration XML file, but (as we do here) you can also create it programmatically. The minimum configuration a _ProcessEngineConfiguration_ needs
-is a JDBC connection to a database:
+首先要做的是初始化**ProcessEngine**流程引擎实例。这是一个线程安全的对象，因此通常只需要在一个应用中初始化一次。
+__ProcessEngine__由**ProcessEngineConfiguration**实例创建。该实例可以配置与调整流程引擎的设置。
+通常使用一个配置XML文件创建__ProcessEngineConfiguration__，但是（像在这里做的一样）也可以编程方式创建它。
+__ProcessEngineConfiguration__所需的最小配置，是数据库JDBC连接：
 
 [source,java,linenums]
 ----
@@ -119,23 +121,22 @@ public class HolidayRequest {
 }
 ----
 
-In the code above, on line 10, a _standalone_ configuration object is created. The _'standalone'_ here refers to the fact that the engine is created and used completely by itself (and not, for example, 
-in a Spring environment, where you'd use the _SpringProcessEngineConfiguration_ class instead). On lines 11 to 14, the JDBC connection parameters to an in-memory H2 database instance are passed. 
-Important: note that such a database does not survive a JVM restart. If you want your data to be persistent, you'll need to switch to a persistent database and switch the connection parameters accordingly. 
-On line 15 we're setting a flag to _true_ to make sure that the database schema is created if it doesn't already exist in the database pointed to by the JDBC parameters. 
-Alternatively, Flowable ships with a set of SQL files that can be used to create the database schema with all the tables manually.
+在上面的代码中，第10行创建了一个__独立(standalone)__配置对象。这里的__'独立'__指的是引擎是完全独立创建及使用的（而不是在Spring环境中使用，这时需要使用__SpringProcessEngineConfiguration__类代替）。第11至14行中，传递了一个内存H2数据库实例的JDBC连接参数。
+重要：请注意这样的数据库在JVM重启后会消失。如果需要永久保存数据，需要切换为持久化数据库，并相应切换连接参数。
+第15行中，设置了__true__，确保在JDBC参数连接的数据库中，数据库表结构不存在时，会创建相应的表结构。
+另外，Flowable也提供了一组SQL文件，可用于手动创建所有表的数据库表结构。
 
-The *ProcessEngine* object is then created using this configuration (line 17).
+然后使用这个配置创建**ProcessEngine**对象（第17行）。
 
-You can now run this. The easiest way in Eclipse is to right-click on the class file and select _Run As -> Java Application_:
+这样就可以运行了。在Eclipse中最简单的方法是右键点击类文件，选择__Run As -> Java Application__ ：
 
 image::images/getting.started.run.main.png[align="center"]
 
-The application runs without problems, however, no useful information is shown in the console except a message stating that the logging has not been configured properly:
+应用运行没有问题，但也没有在控制台提供有用的信息，只有一条消息提示日志没有正确配置：
 
 image::images/getting.started.console.logging.png[align="center"]
 
-Flowable uses link:$$http://www.slf4j.org/$$[SLF4J] as its logging framework internally. For this example, we'll use the log4j logger over SLF4j, so add the following dependencies to the pom.xml file:
+Flowable使用link:$$http://www.slf4j.org/$$[SLF4J]作为内部日志框架。在这个例子中，我们使用log4j作为SLF4J的实现。因此在pom.xml文件中添加下列依赖：
 
 [source,xml,linenums]
 ----
@@ -151,7 +152,7 @@ Flowable uses link:$$http://www.slf4j.org/$$[SLF4J] as its logging framework int
 </dependency>
 ----
 
-Log4j needs a properties file for configuration. Add a _log4j.properties_ file to the _src/main/resources_ folder with the following content:
+Log4j需要一个配置文件。在__src/main/resources__文件夹下添加__log4j.properties__文件，并写入下列内容：
 
 ----
 log4j.rootLogger=DEBUG, CA
@@ -161,44 +162,44 @@ log4j.appender.CA.layout=org.apache.log4j.PatternLayout
 log4j.appender.CA.layout.ConversionPattern= %d{hh:mm:ss,SSS} [%t] %-5p %c %x - %m%n
 ----
 
-Rerun the application. You should now see informative logging about the engine booting up and the database schema being created in the database:
+重新运行应用。应该可以看到关于引擎启动与创建数据库表结构的提示日志：
 
 image::images/getting.started.console.logging2.png[align="center"]
 
-We've now got a process engine booted up and ready to go. Time to feed it a process!
+这样就得到了一个启动可用的流程引擎。接下来为它提供一个流程！
 
-==== Deploying a process definition
+[[_deploying_a_process_definition]]
+==== 部署流程定义
 
-The process we'll build is a very simple holiday request process. The Flowable engine expects processes to be defined in the BPMN 2.0 format, which is an XML standard that is widely accepted in the industry. 
-In Flowable terminology, we speak about this as a *process definition*. From a _process definition_, many *process instances* can be started. Think of the _process definition_ as the blueprint for many executions 
-of the process. In this particular case, the _process definition_ defines the different steps involved in requesting holidays, while one _process instance_ matches the request for a holiday by one particular employee.
+我们要构建的流程是一个非常简单的请假流程。Flowable引擎需要流程定义为BPMN 2.0格式，这是一个业界广泛接受的XML标准。
+在Flowable术语中，我们将其称为一个**流程定义(process definition)**。一个__流程定义__可以启动多个**流程实例(process instance)**。__流程定义__可以看做是重复执行流程的蓝图。
+在这个例子中，__流程定义__定义了请假的各个步骤，而一个__流程实例__对应某个雇员提出的一个请假申请。
 
-BPMN 2.0 is stored as XML, but it has a visualization part too: it defines in a standard way how each different step type (a human task, an automatic service call, and so on) is represented and how to connect 
-these different steps to each other. Through this, the BPMN 2.0 standard allows technical and business people to communicate about business processes in a way that both parties understand.
+BPMN 2.0存储为XML，并包含可视化的部分：使用标准方式定义了每个步骤类型（人工任务，自动服务调用，等等）如何呈现，以及如何互相连接。这样BPMN 2.0标准使技术人员与业务人员能用双方都能理解的方式交流业务流程。
 
-The process definition we'll use is the following:
+我们要使用的流程定义为：
 
 image::images/getting.started.bpmn.process.png[align="center"]
 
-The process should be quite self-explanatory, but for clarity's sake let's describe the different bits:
+这个流程应该已经十分自我解释了。但为了明确起见，说明一下几个要点：
 
-* We assume the process is started by providing some information, such as the employee name, the amount of holiday requested and a description. Of course, this could be modeled as a separate first step in the process. 
-However, by having it as 'input data' for the process, a process instance is only actually created when a real request has been made. In the alternative case, a user could change his mind and cancel before submitting, yet the process instance would now be there. 
-In some scenarios this could be valuable information (for example, how many times is a request started, but not finished), depending on the business goal.
-* The circle on the left is called a *start event*. It's the starting point of a process instance.
-* The first rectangle is a *user task*. This is a step in the process that a human user has to perform. In this case, the manager needs to approve or reject the request.
-* Depending on what the manager decides, the *exclusive gateway* (the diamond shape with the cross) will route the process instance to either the approval or the rejection path.
-* If approved, we have to register the request in some external system, which is followed by a user task again for the original employee that notifies them of the decision. 
-This could, of course, be replaced by an email.
-* If rejected, an email is sent to the employee informing them of this.
+* 我们假定启动流程需要提供一些信息，例如雇员名字、请假时长以及说明。当然，这些可以单独建模为流程中的第一步。
+但是如果将它们作为流程的“输入信息”，就能保证只有在实际请求时才会建立一个流程实例。否则（将提交作为流程的第一步），用户可能在提交之前改变主意并取消，但流程实例已经创建了。
+在某些场景中，就可能影响重要的指标（例如启动了多少申请，但还未完成），取决于业务目标。
+* 左侧的圆圈叫做**启动事件(start event)**。这是一个流程实例的起点。
+* 第一个矩形是一个**用户任务(user task)**。这是流程中人类用户操作的步骤。在这个例子中，经理需要批准或驳回申请。
+* 取决于经理的决定，**排他网关(exclusive gateway)** (带叉的菱形)会将流程实例路由至批准或驳回路径。
+* 如果批准，则需要将申请注册至某个外部系统，并跟着另一个用户任务，将经理的决定通知给申请人。当然也可以改为发送邮件。
+* 如果驳回，则为雇员发送一封邮件通知他。
 
-Typically, such a _process definition_ is modeled with a visual modeling tool, such as the Flowable Designer (Eclipse) or the Flowable Modeler (web application).
 
-Here, however, we're going to write the XML directly to familiarize ourselves with BPMN 2.0 and its concepts.
+一般来说，这样的__流程定义__使用可视化建模工具建立，如Flowable Designer(Eclipse)或Flowable Web Modeler(Web应用)。
 
-The BPMN 2.0 XML corresponding to the diagram above is shown below. Note that this is only the 'process part'. If you'd used a graphical modeling tool, the underlying XML file also contains the 'visualization' part that describes the graphical information, such as the coordinates of the various elements of the process definition (all graphical information is contained in the _BPMNDiagram_ tag in the XML, which is a child element of the _definitions_ tag).
+但在这里我们直接撰写XML，以熟悉BPMN 2.0及其概念。
 
-Save the following XML in a file named _holiday-request.bpmn20.xml_ in the _src/main/resources_ folder.
+与上面展示的流程图对应的BPMN 2.0 XML在下面显示。请注意这只包含了“流程部分”。如果使用图形化建模工具，实际的XML文件还将包含“可视化部分”，用于描述图形信息，如流程定义中各个元素的坐标（所有的图形化信息包含在XML的__BPMNDiagram__标签中，作为__definitions__标签的子元素）。
+
+将下面的XML保存在__src/main/resources__文件夹下名为__holiday-request.bpmn20.xml__的文件中。
 
 [source,xml,linenums]
 ----
@@ -258,22 +259,22 @@ Save the following XML in a file named _holiday-request.bpmn20.xml_ in the _src/
 </definitions>
 ----
 
-Lines 2 to 11 look a bit daunting, but it's the same as you'll see in almost every process definition. It's kind of _boilerplate_ stuff that's needed to be fully compatible with the BPMN 2.0 standard specification.
+第2至11行看起来挺吓人，但其实在大多数的流程定义中都是一样的。这是一种__样板文件__，需要与BPMN 2.0标准规范完全一致。
 
-Every step (in BPMN 2.0 terminology, *'activity'*) has an _id_ attribute that gives it a unique identifier in the XML file. All _activities_ can have an optional name too, which increases the readability of the visual diagram, of course.
+每一个步骤（在BPMN 2.0术语中称作**'活动(activity)'**）都有一个__id__属性，为其提供一个在XML文件中唯一的标识符。所有的__活动__都可以设置一个名字，以提高流程图的可读性。
 
-The _activities_ are connected by a *sequence flow*, which is a directed arrow in the visual diagram. When executing a process instance, the execution will flow from the _start event_ to the next _activity_, following the _sequence flow_.
+__活动__之间通过**顺序流(sequence flow)**连接，在流程图中是一个有向箭头。在执行流程实例时，执行(execution)会从__启动事件__沿着__顺序流__流向下一个__活动__。
 
-The _sequence flows_ leaving the _exclusive gateway_ (the diamond shape with the X) are clearly special: both have a _condition_ defined in the form of an _expression_ (see line 25 and 32). When the process instance execution reaches this _gateway_, the _conditions_ are evaluated and the first that resolves to _true_ is taken. This is what the _exclusive_ stands for here: only one is selected. Other types of gateways are, of course, possible if different routing behavior is needed.
+离开__排他网关(带有X的菱形)__的__顺序流__很特别：都以__表达式(expression)__的形式定义了__条件(condition)__ （见第25至32行）。当流程实例的执行到达这个__网关__时，会计算__条件__，并使用第一个计算为__true__的顺序流。这就是__排他__的含义：只选择一个。当然如果需要不同的路由策略，可以使用其他类型的网关。
 
-The condition written here as an _expression_ is of the form _${approved}_, which is a shorthand for _${approved == true}_. The variable 'approved' is called a *process variable*. A _process variable_ is a persistent bit of data that is stored together with the process instance and can be used during the lifetime of the process instance. In this case, it does mean that we will have to set this _process variable_ at a certain point (when the manager user task is submitted or, in Flowable terminology, _completed_) in the process instance, as it's not data that is available when the process instance starts.
+这里用作条件的__表达式__为__${approved}__，这是__${approved == true}__的简写。变量'approved'被称作**流程变量(process variable)**。__流程变量__是持久化的数据，与流程实例存储在一起，并可以在流程实例的生命周期中使用。在这个例子里，我们需要在特定的地方（当经理用户任务提交时，或者以Flowable的术语来说，__完成(complete)__时）设置这个__流程变量__，因为这不是流程实例启动时就能获取的数据。
 
-Now we have the process BPMN 2.0 XML file, we next need to *'deploy'* it to the engine. _Deploying_ a process definition means that:
+现在我们已经有了流程BPMN 2.0 XML文件，下来需要将它**'部署(deploy)'**到引擎中。__部署__一个流程定义意味着：
 
-* the process engine will store the XML file in the database, so it can be retrieved whenever needed
-* the process definition is parsed to an internal, executable object model, so that _process instances_ can be started from it.
+* 流程引擎会将XML文件存储在数据库中，这样可以在需要的时候获取它。
+* 流程定义转换为内部的、可执行的对象模型，这样使用它就可以启动__流程实例__。
 
-To _deploy_ a process definition to the Flowable engine, the _RepositoryService_ is used, which can be retrieved from the _ProcessEngine_ object. Using the _RepositoryService_, a new _Deployment_ is created by passing the location of the XML file and calling the _deploy()_ method to actually execute it:
+将流程定义__部署__至Flowable引擎，需要使用__RepositoryService__，其可以从__ProcessEngine__对象获取。使用__RepositoryService__，可以通过XML文件的路径创建一个新的__部署(Deployment)__，并调用__deploy()__方法实际执行：
 
 [source,java,linenums]
 ----
@@ -283,7 +284,7 @@ Deployment deployment = repositoryService.createDeployment()
   .deploy();
 ----
 
-We can now verify that the process definition is known to the engine (and learn a bit about the API) by querying it through the API. This is done by creating a new _ProcessDefinitionQuery_ object through the _RepositoryService_.
+我们现在可以通过API查询验证流程定义已经部署在引擎中（并学习一些API）。通过__RepositoryService__创建的__ProcessDefinitionQuery__对象实现。
 
 [source,java,linenums]
 ----
@@ -293,11 +294,12 @@ ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQ
 System.out.println("Found process definition : " + processDefinition.getName());
 ----
 
-==== Starting a process instance
+[[_starting_a_process_instance]]
+==== 启动流程实例
 
-We now have the process definition _deployed_ to the process engine, so _process instances_ can be started using this _process definition_ as a 'blueprint'.
+现在已经在流程引擎中__部署__了流程定义，因此可以使用这个__流程定义__作为“蓝图”启动__流程实例__。
 
-To start the process instance, we need to provide some initial _process variables_. Typically, you'll get these through a form that is presented to the user or through a REST API when a process is triggered by something automatic. In this example, we'll keep it simple and use the java.util.Scanner class to simply input some data on the command line:
+要启动流程实例，需要提供一些初始化__流程变量__。一般来说，可以通过呈现给用户的表单，或者在流程由其他系统自动触发时通过REST API，来获取这些变量。在这个例子里，我们简化为使用java.util.Scanner类在命令行输入一些数据：
 
 [source,java,linenums]
 ----
@@ -313,9 +315,9 @@ System.out.println("Why do you need them?");
 String description = scanner.nextLine();
 ----
 
-Next, we can start a _process instance_ through the _RuntimeService_. The collected data is passed as a _java.util.Map_ instance, where the key is the identifier that will be used to retrieve the variables later on. The process instance is started using a _key_. This _key_ matches the _id_ attribute that is set in the BPMN 2.0 XML file, in this case _holidayRequest_.
+截下来，我们使用__RuntimeService__启动一个__流程实例__。收集的数据作为一个__java.util.Map__实例传递，其中的键就是之后用于获取变量的标识符。这个流程实例使用__key__启动。这个__key__就是BPMN 2.0 XML文件中设置的__id__属性，在这个例子里是__holidayRequest__。
 
-(NOTE: there are many ways you'll learn later on to start a process instance, beyond using a key)
+（请注意：除了使用key之外，在后面你还会看到有很多其他方式启动一个流程实例）
 
 [source,xml]
 ----
@@ -334,38 +336,40 @@ ProcessInstance processInstance =
   runtimeService.startProcessInstanceByKey("holidayRequest", variables);
 ----
 
-When the process instance is started, an *execution* is created and put in the start event. From there, this _execution_ follows the sequence flow to the user task for the manager approval and executes the user task behavior. This behavior will create a task in the database that can be found using queries later on. A user task is a _wait state_ and the engine will stop executing anything further, returning the API call.
+在流程实例启动后，会创建一个**执行(execution)**，并将其放在启动事件上。从这里开始，这个__执行__沿着顺序流移动到经理审批的用户任务，并执行用户任务行为。这个行为将在数据库中创建一个任务，该任务可以之后使用查询找到。用户任务是一个__等待状态(wait state)__，引擎会停止执行，返回API调用处。
 
-==== Sidetrack: transactionality
+[[_sidetrack_transactionality]]
+==== 另一个话题：事务
 
-In Flowable, database transactions play a crucial role to guarantee data consistency and solve concurrency problems. When you make a Flowable API call, by default, everything is synchronous and part of the same transaction. Meaning, when the method call returns, a transaction will be started and committed.
+在Flowable中，数据库事务扮演了关键角色，用于保证数据一致性，并解决并发问题。当调用Flowable API时，默认情况下，所有操作都是同步的，并处于同一个事务下。这意味着，当方法调用返回时，会启动并提交一个事务。
 
-When a process instance is started, there will be *one database transaction* from the start of the process instance to the next _wait state_. In this example, this is the first user task. When the engine reaches this user task, the state is persisted to the database and the transaction is committed and the API call returns.
+流程启动后，会有**一个数据库事务**从流程实例启动时持续到下一个__等待状态__。在这个例子里，指的是第一个用户任务。当引擎到达这个用户任务时，状态会持久化至数据库，提交事务，并返回API调用处。
 
-In Flowable, when continuing a process instance, there will always be one database transaction going from the previous _wait state_ to the next _wait state_. Once persisted, the data can be in the database for a long time, even years if it has to be, until an API call is executed that takes the process instance further. Note that no computing or memory resources are consumed when the process instance is in such a wait state, waiting for the next API call.
+在Flowable中，当一个流程实例运行时，总会有一个数据库事务从前一个__等待状态__持续到下一个__等待状态__。数据持久化之后，可能在数据库中保存很长时间，甚至几年，直到某个API调用使流程实例继续执行。请注意当流程处在等待状态时，不会消耗任何计算或内存资源，直到下一次APi调用。
 
-In the example here, when the first user task is completed, one database transaction will be used to go from the user task through the exclusive gateway (the automatic logic) until the second user task. Or straight to the end with the other path.
+在这个例子中，当第一个用户任务完成时，会启动一个数据库事务，从用户任务开始，经过排他网关（自动逻辑），直到第二个用户任务。或通过另一条路径直接到达结束。
 
+[[_querying_and_completing_tasks]]
+==== 查询与完成任务
 
-==== Querying and completing tasks
+在更实际的应用中，会为雇员及经理提供用户界面，让他们可以登录并查看任务列表。其中可以看到作为__流程变量__存储的流程实例数据，并决定如何操作任务。在这个例子中，我们通过执行API调用来模拟任务列表，通常这些API都是由UI驱动的服务在后台调用的。
 
-In a more realistic application, there will be a user interface where the employees and the managers can log in and see their task lists. With these, they can inspect the process instance data that is stored as _process variables_ and decide what they want to do with the task. In this example, we will mimic task lists by executing the API calls that normally would be behind a service call that drives a UI.
-
-We haven't yet configured the assignment for the user tasks. We want the first task to go the 'managers' group and the second user task to be assigned to the original requester of the holiday. To do this, add the _candidateGroups_ attribute to the first task:
+我们还没有为用户任务配置办理人。我们想将第一个任务指派给"经理(managers)"组，而第二个用户任务指派给请假申请的提交人。因此需要为第一个任务添加__candidateGroups__属性：
 
 [source,xml]
 ----
 <userTask id="approveTask" name="Approve or reject request" flowable:candidateGroups="managers"/>
 ----
 
-and the _assignee_ attribute to the second task as shown below. Note that we're not using a static value like the 'managers' value above, but a dynamic assignment based on a process variable that we've passed when the process instance was started:
+并如下所示为第二个任务添加__assignee__属性。请注意我们没有像上面的'managers'一样使用静态值，而是使用一个流程变量动态指派。这个流程变量是在流程实例启动时传递的：
+
 
 [source,xml]
 ----
 <userTask id="holidayApprovedTask" name="Holiday approved" flowable:assignee="${employee}"/>
 ----
 
-To get the actual task list, we create a _TaskQuery_ through the _TaskService_ and we configure the query to only return the tasks for the 'managers' group:
+要获得实际的任务列表，需要通过__TaskService__创建一个__TaskQuery__。我们配置这个查询只返回'managers'组的任务：
 
 [source,java,linenums]
 ----
@@ -377,7 +381,7 @@ for (int i=0; i<tasks.size(); i++) {
 }
 ----
 
-Using the task identifier, we can now get the specific process instance variables and show on the screen the actual request:
+可以使用任务Id获取特定流程实例的变量，并在屏幕上显示实际的申请：
 
 [source,java,linenums]
 ----
@@ -389,12 +393,11 @@ System.out.println(processVariables.get("employee") + " wants " +
     processVariables.get("nrOfHolidays") + " of holidays. Do you approve this?");
 ----
 
-Which, if you run this, should look something like this:
+运行结果像下面这样：
 
 image::images/getting.started.console.logging3.png[align="center"]
 
-The manager can now *complete the task*. In reality, this often means that a form is submitted by the user. The data from the form is then passed as _process
- variables_. Here, we'll mimic this by passing a map with the 'approved' variable (the name is important, as it's used later on in the conditions of the sequence flow!) when the task is completed:
+经理现在就可以**完成任务**了。在现实中，这通常意味着由用户提交一个表单。表单中的数据作为__流程变量__传递。在这里，我们在完成任务时传递带有'approved'变量（这个名字很重要，因为之后会在顺序流的条件中使用！）的map来模拟：
 
 [source,java,linenums]
 ----
@@ -404,12 +407,12 @@ variables.put("approved", approved);
 taskService.complete(task.getId(), variables);
 ----
 
-The task is now completed and one of the two paths leaving the exclusive gateway is selected based on the 'approved' process variable.
+现在任务完成，并会在离开排他网关的两条路径中，基于'approved'流程变量选择一条。
 
 [[getting.started.delegate]]
-==== Writing a JavaDelegate
+==== 实现JavaDelegate
 
-There is a last piece of the puzzle still missing: we haven't implemented the automatic logic that will get executed when the request is approved. In the BPMN 2.0 XML this is a *service task* and it looked above like:
+拼图还缺了一块：我们还没有实现申请通过后执行的自动逻辑。在BPMN 2.0 XML中，这是一个**服务任务(service task)**：
 
 [source,xml]
 ----
@@ -417,10 +420,9 @@ There is a last piece of the puzzle still missing: we haven't implemented the au
     flowable:class="org.flowable.CallExternalSystemDelegate"/>
 ----
 
-In reality, this logic could be anything, ranging from calling a service with HTTP REST, to executing some legacy code calls to a system the organization has
-been using for decades. We won't implement the actual logic here but simply log the _processing_.
+在现实中，这个逻辑可以做任何事情：向某个系统发起一个HTTP REST服务调用，或调用某个使用了好几十年的系统中的遗留代码。我们不会在这里实现实际的逻辑，而只是简单的日志记录__流程__。
 
-Create a new class (_File -> New -> Class_ in Eclipse), fill in _org.flowable_ as package name and _CallExternalSystemDelegate_ as class name. Make that class implement the _org.flowable.engine.delegate.JavaDelegate_ interface and implement the _execute_ method:
+创建一个新的类(在Eclipse里__File -> New -> Class__)，填入__org.flowable__作为包名，__CallExternalSystemDelegate__作为类名。让这个类实现__org.flowable.engine.delegate.JavaDelegate__接口，并实现__execute__方法：
 
 [source,java,linenums]
 ----
@@ -439,23 +441,23 @@ public class CallExternalSystemDelegate implements JavaDelegate {
 }
 ----
 
-When the _execution_ arrives at the _service task_, the class that is referenced in the BPMN 2.0 XML is instantiated and called.
+当__执行__到达__服务任务__时，会初始化并调用BPMN 2.0 XML中所引用的类。
 
-When running the example now, the logging message is shown, demonstrating the custom logic is indeed executed:
+现在执行这个例子的时候，就会显示出日志信息，说明已经执行了自定义逻辑：
 
 image::images/getting.started.console.logging4.png[align="center"]
 
+[[_working_with_historical_data]]
+==== 使用历史数据
 
-==== Working with historical data
+选择使用Flowable这样的流程引擎的原因之一，是它可以自动存储所有流程实例的**审计数据**或**历史数据**。这些数据可以用于创建报告，深入展现组织运行的情况，瓶颈在哪里，等等。
 
-One of the many reasons for choosing to use a process engine like Flowable is because it automatically stores *audit data* or *historical data* for all the process instances. This data allows the creation of rich reports that give insights into how the organization works, where the bottlenecks are, etc.
+例如，如果希望显示流程实例已经执行的时间，就可以从__ProcessEngine__获取__HistoryService__，并创建__历史活动(historical activities)__的查询。在下面的代码片段中，可以看到我们添加了一些额外的过滤条件：
 
-For example, suppose we want to show the duration of the process instance that we've been executing so far. To do this, we get the _HistoryService_  from the _ProcessEngine_ and create a query for _historical activities_. In the snippet below you can see we add some additional filtering:
+* 只选择一个特定流程实例的活动
+* 只选择已完成的活动
 
-* only the activities for one particular process instance
-* only the activities that have finished
-
-The results are also sorted by end time, meaning that we'll get them in execution order.
+结果按照结束时间排序，代表其执行顺序。
 
 [source,java,linenums]
 ----
@@ -473,7 +475,7 @@ for (HistoricActivityInstance activity : activities) {
 }
 ----
 
-Running the example again, we now see something like this in the console:
+再次运行例子，可以看到控制台中显示：
 
 ----
 startEvent took 1 milliseconds
@@ -482,95 +484,100 @@ decision took 3 milliseconds
 externalSystemCall took 1 milliseconds
 ----
 
-==== Conclusion
+[[_conclusion]]
+==== 小结
 
-This tutorial introduced various Flowable and BPMN 2.0 concepts and terminology, while also demonstrating how to use the Flowable API programmatically.
+这个教程介绍了很多Flowable与BPMN 2.0的概念与术语，也展示了如何编程使用Flowable API。
 
-Of course, this is just the start of the journey. The following sections will dive more deeply into the many options and features that the Flowable engine supports. Other sections go into the various ways the Flowable engine can be set up and used, and describe in detail all the BPMN 2.0 constructs that are possible.
+当然，这只是个开始。下面的章节会更深入介绍许多Flowable引擎支持的选项与特性。其他章节介绍安装与使用Flowable引擎的不同方法，并详细介绍了所有可用的BPMN 2.0结构。
 
 [[getting.started.rest]]
-=== Getting started with the Flowable REST API
+=== 开始使用Flowable REST API
 
-This section shows the same example as the <<getting.started.command.line, previous section>>: deploying a process definition, starting a process instance, getting a task list and completing a task. If you haven't read that section, it might be good to skim through it to get an idea of what is done there.
+这个章节展示了与<<getting.started.command.line, 上一章节>>相同的例子：部署一个流程定义，启动一个流程实例，获取任务列表并完成一个任务。最好先快速浏览上一章节以了解所做的事情。
 
-This time, the Flowable REST API is used rather than the Java API. You'll soon notice that the REST API closely matches the Java API, and knowing one automatically means that you can find your way around the other.
+这一次，将使用Flowable REST API而不是Java API。你很快就会意识到REST API与Java API紧密关联。只要了解一个，就能很快学会另一个。
 
-To get a full, detailed overview of the Flowable REST API, check out the <<restApiChapter, REST API chapter>>.
+可以在<<restApiChapter, REST API>>章节找到Flowable REST API的完整细节。
 
-==== Setting up the REST application
+[[_setting_up_the_rest_application]]
+==== 安装REST应用
 
-When you download the .zip file from the flowable.org website, the REST application can be found in the _wars_ folder. You'll need a servlet container, such as link:$$http://tomcat.apache.org//$$[Tomcat], link:$$http://www.eclipse.org/jetty//$$[Jetty], and so on, to run the WAR file.
+从flowable.org网站下载.zip文件后，可以在__wars__文件夹下找到REST应用。要运行这个WAR文件，需要一个servlet容器，例如link:$$http://tomcat.apache.org/$$[Tomcat]、link:$$http://www.eclipse.org/jetty/$$[Jetty]等。
 
-When using Tomcat the steps are as follows:
+使用Tomcat的步骤如下：
 
-* Download and unzip the latest and greatest Tomcat zip file (choose the 'Core' distribution from the Tomcat website).
-* Copy the flowable-rest.war file from the _wars_ folder of the unzipped Flowable distribution to the _webapps_ folder of the unzipped Tomcat folder.
-* On the command line, go to the _bin_ folder of the Tomcat folder.
-* Execute '_./catalina run_' to boot up the Tomcat server.
+* 下载并解压缩最新的Tomcat zip文件（在Tomcat网站中选择'Core'发行版）。
+* 将flowable-rest.war文件从解压的Flowable发行版的__wars__文件夹中复制到解压的Tomcat文件夹下的__webapps__文件夹下。
+* 使用命令行，转到Tomcat文件夹下的__bin__文件夹。
+* 执行'__./catalina run__'启动Tomcat服务器。
 
-During the server boot up, you'll notice some Flowable logging messages passing by. At the end, a message like '_INFO [main] org.apache.catalina.startup.Catalina.start Server startup in xyz ms_' indicates that the server is ready to receive requests. Note that by default an in-memory H2 database instance is used, which means that data won't survive a server restart.
+在服务启动过程中，会显示一些Flowable日志信息。在最后显示的一条类似'__INFO [main] org.apache.catalina.startup.Catalina.start Server startup in xyz ms__'的消息标志着服务器已经启动，可以接受请求。请注意默认情况下，使用H2内存数据库，这意味着数据在服务器重启后会丢失。
 
-In the following sections, we'll use cURL to demonstrate the various REST calls. All REST calls are by default protected with _basic authentication_. The user 'rest-admin' with password 'test' is used in all calls.
+在下面的章节中，我们使用cURL展示各种REST调用。所有的REST调用默认都使用__基本认证__保护，所有的调用的用户都是 'rest-admin'，密码为'test'。
 
-After bootup, verify the application is running correctly by executing
+
+在启动后，通过执行下列命令验证应用运行正常：
 
 ----
 curl --user rest-admin:test http://localhost:8080/flowable-rest/service/management/engine
 ----
 
-If you get back a proper json response, the REST API is up and running.
+如果能获得正确的json响应，则说明REST API已经启动并在工作。
 
-==== Deploying a process definition
+[[_deploying_a_process_definition_2]]
+==== 部署流程定义
 
-The first step is to deploy a process definition. With the REST API, this is done by uploading a .bpmn20.xml file (or .zip file for multiple process definitions) as 'multipart/formdata':
+第一步是部署一个流程定义。使用REST API时，需要将一个.bpmn20.xml文件（或对于多个流程引擎，一个.zip文件）作为'multipart/formdata'上传：
 
 ----
 curl --user rest-admin:test -F "file=@holiday-request.bpmn20.xml" http://localhost:8080/flowable-rest/service/repository/deployments
 ----
 
-To verify that the process definition is deployed correctly, the list of process definitions can be requested:
+要验证流程定义已经正确部署，可以请求流程定义的列表：
 
 ----
 curl --user rest-admin:test http://localhost:8080/flowable-rest/service/repository/process-definitions
 ----
 
-which returns a list of all process definitions currently deployed to the engine.
+这将返回当前引擎中部署的所有流程定义的列表。
 
+[[_start_a_process_instance]]
+==== 启动流程实例
 
-==== Start a process instance
-
-Starting a process instance through the REST API is similar to doing the same through the Java API: a _key_ is provided to identify the process definition to use along with a map of initial process variables:
+使用REST API启动一个流程实例与使用Java API很像：提供__key__作为流程定义的标识，并使用一个map作为初始化流程变量：
 
 ----
 curl --user rest-admin:test -H "Content-Type: application/json" -X POST -d '{ "processDefinitionKey":"holidayRequest", "variables": [ { "name":"employee", "value": "John Doe" }, { "name":"nrOfHolidays", "value": 7 }]}' http://localhost:8080/flowable-rest/service/runtime/process-instances
 ----
 
-which returns something like
+将返回：
 
 ----
 {"id":"43","url":"http://localhost:8080/flowable-rest/service/runtime/process-instances/43","businessKey":null,"suspended":false,"ended":false,"processDefinitionId":"holidayRequest:1:42","processDefinitionUrl":"http://localhost:8080/flowable-rest/service/repository/process-definitions/holidayRequest:1:42","activityId":null,"variables":[],"tenantId":"","completed":false}
 ----
 
-==== Task list and completing a task
+[[_task_list_and_completing_a_task]]
+==== 任务列表与完成任务
 
-When the process instance is started, the first task is assigned to the 'managers' group. To get all tasks for this group, a task query can be done through the REST API:
+当流程实例启动后，第一个任务会指派给'managers'组。要获取这个组的所有任务，可以通过REST API进行任务查询：
 
 ----
 curl --user rest-admin:test -H "Content-Type: application/json" -X POST -d '{ "candidateGroup" : "managers" }' http://localhost:8080/flowable-rest/service/query/tasks
 ----
 
-which returns a list of all tasks for the 'managers' group
+这将返回'manager'组的所有任务的列表。
 
-Such a task can now be completed using:
+可以这样完成任务：
 
 ----
 curl --user rest-admin:test -H "Content-Type: application/json" -X POST -d '{ "action" : "complete", "variables" : [ { "name" : "approved", "value" : true} ]  }' http://localhost:8080/flowable-rest/service/runtime/tasks/25
 ----
 
-However, you most likely will get an error like:
+然而，很可能会产生如下的错误：
 
 ----
 {"message":"Internal server error","exception":"couldn't instantiate class org.flowable.CallExternalSystemDelegate"}
 ----
 
-This means that the engine couldn't find the _CallExternalSystemDelegate_ class that is referenced in the service task. To solve this, the class needs to be put on the classpath of the application (which will require a restart). Create the class as described in <<getting.started.delegate, this section>>, package it up as a JAR and put it in the _WEB-INF/lib_ folder of the flowable-rest folder under the _webapps_ folder of Tomcat.
+这意味着引擎无法找到服务任务引用的__CallExternalSystemDelegate__类。要解决这个错误，需要将该类放在应用的classpath下（并需要重启应用）。按照<<getting.started.delegate, 上一章节>>的介绍创建该类，并将其打包为JAR，放在Tomcat的__webapps__目录下的flowable-rest目录下的__WEB-INF/lib__目录下。

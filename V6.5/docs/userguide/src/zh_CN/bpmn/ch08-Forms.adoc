@@ -1,49 +1,49 @@
 [[forms]]
 
-== Forms
+== 表单
 
-Flowable provides a convenient and flexible way to add forms for the manual steps of your business processes. 
-We support two strategies to work with forms: Built-in form rendering with a form definition (created with the form designer) and external form rendering.
-For the external form rendering strategy form properties can be used (that was supported in the Explorer web application in version 5), or a form key definition that points to an external form reference that can be resolved with custom coding.
+Flowable提供了一种简便灵活的方式，用来为业务流程中的人工步骤添加表单。
+有两种使用表单的方法：使用（由表单设计器创建的）表单定义的内置表单渲染，以及外部表单渲染。
+使用外部表单渲染时，可以使用（自Explorer web应用V5版本支持的）表单参数；也可以使用表单key定义，引用外部的、使用自定义代码解析的表单。
 
 [[formDefinition]]
 
-=== Form definition
+=== 表单定义
 
-Full information about the form definitions and Flowable form engine can be found in the link:$$http://www.flowable.org/docs/userguide-form/$$[Form Engine user guide].
-Form definitions can be created with the Flowable Form Designer that's part of the Flowable Modeler web application, or created by hand with a JSON editor.
-The Form Engine user guide describes the structure of the form definition JSON in full length. The following form field types are supported:
+link:$$http://flowable.org/docs/userguide-form/$$[表单引擎用户手册]中提供了关于表单定义与Flowable表单引擎的完整信息。
+可以使用Flowable表单设计器创建表单定义。表单设计器是Flowable Modeler web应用的一部分。也可以直接使用JSON编辑器创建表单定义。
+表单引擎用户手册中介绍了表单定义JSON的完整结构。表单支持下列表单字段类型：
 
-* Text: rendered as a text field
-* Multiline text: rendered as a text area field
-* Number: rendered as a text field, but only allows numeric values
-* Checkbox: rendered as a checkbox field
-* Date: rendered as a date field
-* Dropdown: rendered as a select field with the option values configured in the field definition
-* Radio buttons: rendered as a radio field with the option values configured in the field definition
-* People: rendered as a select field where a person from the Identity user table can be selected
-* Group of people: rendered as a select field where a group from the Identity group table can be selected
-* Upload: rendered as an upload field
-* Expression: rendered as a label and allows you to use JUEL expressions to use variables and/or other dynamic values in the label text
+* Text: 渲染为文本框
+* Multiline text: 渲染为多行文本框
+* Number: 渲染为只允许数字值的文本框
+* CheckBox: 渲染为复选框
+* Date: 渲染为日期框
+* Dropdown: 渲染为下拉选择框，候选值由字段定义配置
+* Radio buttons: 渲染为单选按钮，候选值由字段定义配置
+* People: 渲染为选人框，可以选择用户身份表中的用户
+* Group of people: 渲染为选组框，可以选择组身份表中的组
+* Upload: 渲染为上传框
+* Expression: 渲染为一个标签，可以在标签文字中使用JUEL表达式，以使用变量及/或其他动态值
 
-The Flowable task application is able to render an html form from the form definition JSON.
-You can also use the Flowable API to get the form definition JSON yourself.
+Flowable Task应用可以用表单定义JSON渲染出html表单。
+也可以使用Flowable API，自行获取表单定义JSON。
 
 [source,java,linenums]
 ----
 FormModel RuntimeService.getStartFormModel(String processDefinitionId, String processInstanceId)
 ----
 
-or 
+或
 
 [source,java,linenums]
 ----
 FormModel TaskService.getTaskFormModel(String taskId)
 ----
 
-The FormModel object is a Java object representation of the form definition JSON.
+FormModel对象是一个代表了表单定义JSON的Java对象。
 
-To start a process instance with a start form definition you can use the following API call:
+可以调用下列API，使用启动表单定义以启动流程实例：
 
 [source,java,linenums]
 ----
@@ -51,11 +51,11 @@ ProcessInstance RuntimeService.startProcessInstanceWithForm(String processDefini
     Map<String, Object> variables, String processInstanceName)
 ----
 
-When a form definition is defined on (one of) the start event(s) of a process definition, this method can be used to start a process instance with the values filled-in in the start form.
-The Flowable task application uses this method to start a process instance with a form as well.
-All form values need to be passed in the variables map and an optional form outcome string and process instance name can be provided.
+如果在流程定义的（某一个或多个）启动事件上定义了表单定义，则可以使用这个方法，使用启动表单中填写的值启动流程实例。
+Flowable Task应用使用同样的方法，用表单启动流程实例。
+通过变量map传入所有需要的表单值，也可以指定表单输出字符串及流程实例名。
 
-In a similar way, a user task can be completed with a form using the following API call:
+类似的，可以调用下列API，使用表单完成用户任务：
 
 [source,java,linenums]
 ----
@@ -63,59 +63,59 @@ void TaskService.completeTaskWithForm(String taskId, String formDefinitionId,
     String outcome, Map<String, Object> variables)
 ----
 
-Again, for more information about form definitions have a look at the link:$$http://www.flowable.org/docs/userguide-form$$[Form Engine user guide].
+再次强调，要获取关于表单定义的更多信息，请查看link:$$http://flowable.org/docs/userguide-form/$$[表单引擎用户手册]。
 
 
 [[formProperties]]
 
 
-=== Form properties
+=== 表单参数
 
-All information relevant to a business process is either included in the process  variables themselves or referenced through the process variables.  Flowable supports complex Java objects to be stored as process variables like +Serializable+ objects, JPA entities or whole XML documents as ++String++s.
+所有与业务流程相关的信息，要么包含在流程变量里，要么可以通过流程变量引用。Flowable也支持将复杂的Java对象，以++Serializable++对象、JPA实体，或整个XML文档存储为++String++等方式，存储为流程变量。
 
-Starting a process and completing user tasks is where people are involved into a process. Communicating with people requires forms to be rendered in some UI technology.  In order to facilitate multiple UI technologies easy, the process definition can include the logic of transforming of the complex Java typed objects in the process variables to a +Map<String,String>+ of *'properties'*.
+启动流程与完成用户任务是用户参与流程的地方，所以需要使用UI界面渲染表单。为了简化UI设计，可以在流程定义中，将流程变量中的复杂的Java对象转换为++Map<String,String>++格式的**__参数__**。
 
-Any UI technology can then build a form on top of those properties, using the Flowable API methods that expose the property information. The properties can provide a dedicated (and more limited) view on the process variables. The properties needed to display a form are available in the *FormData* return values of for example
+这样UI就可以使用Flowable API方法，在这些参数的基础上构建表单。这些参数可看做是专用（也更受限）的流程变量视图。可以使用**FormData**返回值，获取用于显示表单的参数。如
 
 [source,java,linenums]
 ----
 StartFormData FormService.getStartFormData(String processDefinitionId)
 ----
 
-or
+或
 
 [source,java,linenums]
 ----
-TaskFormdata FormService.getTaskFormData(String taskId)
+TaskFormData FormService.getTaskFormData(String taskId)
 ----
 
-By default, the built-in form engine 'sees' the properties as well as the process variables.  So there is no need to declare task form properties if they match 1-1 with the process variables.  For example, with the following declaration:
+默认情况下，内建表单引擎能够“看到”参数与流程变量。因此如果任务表单参数一对一对应流程变量，则不需要专门进行声明。例如，对于如下声明：
 
 [source,xml,linenums]
 ----
 <startEvent id="start" />
 ----
 
-All process variables are available when execution arrives in the startEvent, but
+当执行到达startEvent时，所有流程变量都可用。但
 
 [source,java,linenums]
 ----
 formService.getStartFormData(String processDefinitionId).getFormProperties()
 ----
 
-will be empty since no specific mapping was defined.
+将为空，因为并未指定映射。
 
-In the above case, all the submitted properties will be stored as process variables. This means that by simply adding a new input field in the form, a new variable can be stored.
+在上面的例子中，所有提交的参数都存储为流程变量。也就是说，只要简单地在表单中添加输入框，就可以存储新变量。
 
-Properties are derived from process variables, but they don't have to be stored as process variables.  For example, a process variable could be a JPA entity of class Address.  And a form property +StreetName+ used by the UI technology could be linked with an expression +#{address.street}+
+参数从流程变量衍生而来，但并不是必须存储为流程变量。例如，流程变量可以是Address类的JPA实体。而UI使用的++StreetName++表单参数，则通过++#{address.street}++表达式获取。
 
-Analogue, the properties that a user is supposed to submit in a form can be stored as a process variable or as a nested property in one of the process variables with a UEL value expression like e.g. +#{address.street}+ .
+类似的，表单中用户需要提交的参数，可以存储为流程变量，也可以使用UEL值表达式，保存至某个流程变量的参数。如++#{address.street}++。
 
-Analogue the default behavior of properties that are submitted is that they will be stored as process variables unless a +formProperty+ declaration specifies otherwise.
+除非使用++formProperty++声明，否则提交参数时，默认将其存储为流程变量。
 
-Also type conversions can be applied as part of the processing between form properties and process variables.
+在表单参数与流程变量的处理过程中，也可以进行类型转换。
 
-For example:
+例如：
 
 [source,xml,linenums]
 ----
@@ -129,15 +129,14 @@ For example:
 </userTask>
 ----
 
-* Form property +room+ will be mapped to process variable +room+ as a String
-* Form property +duration+ will be mapped to process variable +duration+ as a java.lang.Long
-* Form property +speaker+ will be mapped to process variable +SpeakerName+.  It will only be available in the TaskFormData object.  If property speaker is submitted, an FlowableException will be thrown. Analogue, with attribute +readable="false"+, a property can be excluded from the FormData, but still be processed in the submit.
+* ++room++表单参数将作为String，映射为++room++流程变量
+* ++duration++表单参数将作为java.lang.Long，映射为++duration++流程变量
+* ++speaker++表单参数将被映射为++SpeakerName++流程变量。将只在TaskFormData对象中可用。若提交了speaker参数，将抛出FlowableException。对应地，使用++readable="false"++属性，参数可以提交，但不会在FormData中提供。
+* ++street++表单参数将作为String，映射为++address++流程变量的Java bean参数++street++。如果在提交时没有提供这个字段，required="true"将抛出异常。
 
-* Form property +street+ will be mapped to Java bean property +street+ in process variable +address+ as a String.  And required="true" will throw an exception during the submit if the property is not provided.
+++StartFormData FormService.getStartFormData(String processDefinitionId)++与++TaskFormdata FormService.getTaskFormData(String taskId)++方法返回的FormData同样提供类型元数据。
 
-It's also possible to provide type metadata as part of the FormData that is returned from methods +StartFormData FormService.getStartFormData(String processDefinitionId)+ and +TaskFormdata FormService.getTaskFormData(String taskId)+
-
-We support the following form property types:
+支持下列表单参数类型：
 
 * +string+ (org.flowable.engine.impl.form.StringFormType
 * +long+ (org.flowable.engine.impl.form.LongFormType)
@@ -146,32 +145,43 @@ We support the following form property types:
 * +date+ (org.flowable.engine.impl.form.DateFormType)
 * +boolean+ (org.flowable.engine.impl.form.BooleanFormType)
 
-For each form property declared, the following +FormProperty+ information will be made available through +List<FormProperty> formService.getStartFormData(String processDefinitionId).getFormProperties()+ and +List<FormProperty> formService.getTaskFormData(String taskId).getFormProperties()+
-
+可以通过++List<FormProperty> formService.getStartFormData(String processDefinitionId).getFormProperties()++与++List<FormProperty> formService.getTaskFormData(String taskId).getFormProperties()++方法，获取每个表单参数的下列++FormProperty++信息：
 
 [source,java,linenums]
 ----
 public interface FormProperty {
-  /** the key used to submit the property in {@link FormService#submitStartFormData(String, java.util.Map)}
-   * or {@link FormService#submitTaskFormData(String, java.util.Map)} */
+  /**
+   * 在{@link FormService#submitStartFormData(String, java.util.Map)}
+   * 或{@link FormService#submitTaskFormData(String, java.util.Map)}
+   * 中提交参数时使用的key
+   */
   String getId();
-  /** the display label */
+
+  /** 显示标签 */
   String getName();
-  /** one of the types defined in this interface like e.g. {@link #TYPE_STRING} */
+  
+  /** 在本接口中定义的类型，例如{@link #TYPE_STRING} */
   FormType getType();
-  /** optional value that should be used to display in this property */
+  
+  /** 可选。这个参数需要显示的值 */
   String getValue();
-  /** is this property read to be displayed in the form and made accessible with the methods
-   * {@link FormService#getStartFormData(String)} and {@link FormService#getTaskFormData(String)}. */
+  
+  /** 这个参数是否可以读取：在表单中显示，并可通过
+   * {@link FormService#getStartFormData(String)}
+   * 与{@link FormService#getTaskFormData(String)}
+   * 方法访问。
+   */
   boolean isReadable();
-  /** is this property expected when a user submits the form? */
+  
+  /** 用户提交表单时是否可以包含这个参数？ */
   boolean isWritable();
-  /** is this property a required input field */
+  
+  /** 输入框中是否必填这个参数 */
   boolean isRequired();
 }
 ----
 
-For example:
+例如：
 
 [source,xml,linenums]
 ----
@@ -197,9 +207,9 @@ For example:
 </startEvent>
 ----
 
-All that information is accessible through the API. The type names can be obtained with  +formProperty.getType().getName()+.  And even the date pattern is available with +formProperty.getType().getInformation("datePattern")+ and the enumeration values are accessible with +formProperty.getType().getInformation("values")+
+所有这些信息都可以通过API获取：用++formProperty.getType().getName()++获取类型名、++formProperty.getType().getInformation("datePattern")++获取日期格式、++formProperty.getType().getInformation("values")++获取枚举值。
 
-The following XML snippet
+下面的XML代码片段
 
 [source,xml,linenums]
 ----
@@ -213,24 +223,24 @@ The following XML snippet
 
 ----
 
-could be used to render to a process start form in a custom app.
+可以在自定义应用中用于渲染流程启动表单。
 
 
 [[externalFormRendering]]
 
 
-=== External form rendering
+=== 外部表单渲染
 
-The API also allows for you to perform your own task form rendering outside of the Flowable Engine. These steps explain the hooks that you can use to render your task forms yourself.
+也可以使用API，在Flowable引擎之外，自行渲染任务表单。下面的步骤介绍在自行渲染任务表单时，可以使用的钩子。
 
-Essentially, all the data that's needed to render a form is assembled in one of these two service methods: +StartFormData FormService.getStartFormData(String processDefinitionId)+ and +TaskFormdata FormService.getTaskFormData(String taskId)+.
+实际上，渲染表单所需的所有数据都组装在：++StartFormData FormService.getStartFormData(String processDefinitionId)++与++TaskFormdata FormService.getTaskFormData(String taskId)++这两个方法中。
 
-Submitting form properties can be done with +ProcessInstance FormService.submitStartFormData(String processDefinitionId, Map<String,String> properties)+ and +void FormService.submitTaskFormData(String taskId, Map<String,String> properties)+
+可以通过++ProcessInstance FormService.submitStartFormData(String processDefinitionId, Map<String,String> properties)++与++void FormService.submitTaskFormData(String taskId, Map<String,String> properties)++提交表单参数。
 
-To learn about how form properties map to process variables, see <<formProperties>>
+查看<<formProperties>>了解如何将表单参数映射至流程变量。
 
-You can place any form template resource inside the business archives that you deploy (in case you want to store them versioned with the process).  It will be available as a resource in the deployment, which you can retrieve using: +String ProcessDefinition.getDeploymentId()+ and +InputStream RepositoryService.getResourceAsStream(String deploymentId, String resourceName);+ This could be your template definition file, which you can use to render/show the form in your own application.
+如果希望按版本将表单与流程存储在一起，可以将表单模板资源放在部署的业务存档中，并可以使用++String ProcessDefinition.getDeploymentId()++与++InputStream RepositoryService.getResourceAsStream(String deploymentId, String resourceName);++，作为部署中的资源获取，在你的应用中渲染/显示表单。
 
-You can use this capability of accessing the deployment resources beyond task forms for any other purposes as well.
+除了任务表单之外，也可以获取其他部署资源。
 
-The attribute +<userTask flowable:formKey="..."+ is exposed by the API through +String FormService.getStartFormData(String processDefinitionId).getFormKey()+ and +String FormService.getTaskFormData(String taskId).getFormKey()+. You could use this to store the full name of the template within your deployment (e.g. ++org/flowable/example/form/my-custom-form.xml++), but this is not required at all. For instance, you could also store a generic key in the form attribute and apply an algorithm or transformation to get to the actual template that needs to be used. This might be handy when you want to render different forms for different UI technologies like e.g. one form for usage in a web app of normal screen size, one form for mobile phone's small screens and maybe even a template for an IM form or an email form.
+++String FormService.getStartFormData(String processDefinitionId).getFormKey()++与++String FormService.getTaskFormData(String taskId).getFormKey()++API提供++<userTask flowable:formKey="..."++属性。可以用它保存部署中模板的全名（如++org/flowable/example/form/my-custom-form.xml++），但这并非唯一选择。例如，也可以在formKey中保存通用的key，通过算法或转换得到实际需要使用的模板。在你需要在不同的UI界面渲染不同的表单时很方便。例如，在普通屏幕尺寸的Web应用中显示一个表单，在手机等小屏幕中显示另一个表单。甚至可以为IM表单或邮件表单提供专门的模板。

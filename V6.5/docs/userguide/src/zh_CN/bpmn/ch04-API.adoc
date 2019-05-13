@@ -1,13 +1,14 @@
 [[chapterApi]]
 
-== The Flowable API
+== Flowable API
 
 [[apiEngine]]
 
 
-=== The Process Engine API and services
+=== 流程引擎API与服务
 
-The engine API is the most common way of interacting with Flowable. The main starting point is the +ProcessEngine+, which can be created in several ways as described in the  <<configuration,configuration section>>. From the ProcessEngine, you can obtain the various services that contain the workflow/BPM methods.  ProcessEngine and the services objects are thread safe, so you can keep a reference to one of those for a whole server.
+引擎API是与Flowable交互的最常用手段。总入口点是++ProcessEngine++。像<<configuration, 配置>>章节中介绍的一样，ProcessEngine可以使用多种方式创建。使用ProcessEngine，可以获得各种提供工作流/BPM方法的服务。ProcessEngine与服务对象都是线程安全的，因此可以在服务器中保存并共用同一个引用。
+
 
 image::images/api.services.png[align="center"]
 
@@ -25,77 +26,77 @@ FormService formService = processEngine.getFormService();
 DynamicBpmnService dynamicBpmnService = processEngine.getDynamicBpmnService();
 ----
 
-+ProcessEngines.getDefaultProcessEngine()+ will initialize and build a process engine the first time it is called and afterwards always return the same process engine. Proper creation and closing of all process engines can be done with +ProcessEngines.init()+  and +ProcessEngines.destroy()+.
+在++ProcessEngines.getDefaultProcessEngine()++第一次被调用时，将初始化并构建流程引擎，之后的重复调用都会返回同一个流程引擎。可以通过++ProcessEngines.init()++创建流程引擎，并由++ProcessEngines.destroy()++关闭流程引擎。
+
+ProcessEngines会扫描++flowable.cfg.xml++与++flowable-context.xml++文件。对于++flowable.cfg.xml++文件，流程引擎会以标准Flowable方式构建引擎：++ProcessEngineConfiguration.createProcessEngineConfigurationFromInputStream(inputStream).buildProcessEngine()++。对于++flowable-context.xml++文件，流程引擎会以Spring的方式构建：首先构建Spring应用上下文，然后从该上下文中获取流程引擎。
+
+所有的服务都是无状态的。这意味着你可以很容易的在集群环境的多个节点上运行Flowable，使用同一个数据库，而不用担心上一次调用实际在哪台机器上执行。不论在哪个节点执行，对任何服务的任何调用都是幂等（idempotent）的。
+
+**RepositoryService**很可能是使用Flowable引擎要用的第一个服务。这个服务提供了管理与控制++部署(deployments)++与++流程定义(process definitions)++的操作。在这里简单说明一下，流程定义是BPMN 2.0流程对应的Java对象，体现流程中每一步的结构与行为。++部署++是Flowable引擎中的包装单元，一个部署中可以包含多个BPMN 2.0 XML文件及其他资源。开发者可以决定在一个部署中包含的内容，可以是单个流程的BPMN 2.0 XML文件，也可以包含多个流程及其相关资源（如'hr-processes'部署可以包含所有与人力资源流程相关的的东西）。++RepositoryService++可用于++部署++这样的包。部署意味着将它上传至引擎，引擎将在储存至数据库之前检查与分析所有的流程。在部署操作后，可以在系统中使用这个部署包，部署包中的所有流程都可以启动。
+
+此外，这个服务还可以：
+
+* 查询引擎现有的部署与流程定义。
+* 暂停或激活部署中的某些流程，或整个部署。暂停意味着不能再对它进行操作，激活刚好相反，重新使它可以操作。
+* 获取各种资源，比如部署中保存的文件，或者引擎自动生成的流程图。
+* 获取POJO版本的流程定义。它可以用Java而不是XML的方式查看流程。
+
+与提供静态信息（也就是不会改变，至少不会经常改变的信息）的++RepositoryService++相反，**RuntimeService**用于启动流程定义的新流程实例。前面介绍过，++流程定义++中定义了流程中不同步骤的结构与行为。流程实例则是流程定义的实际执行过程。同一时刻，一个流程定义通常有多个运行中的实例。++RuntimeService++也用于读取与存储++流程变量++。流程变量是流程实例中的数据，可以在流程的许多地方使用（例如排他网关经常使用流程变量判断流程下一步要走的路径）。++RuntimeService++还可以用于查询流程实例与执行(Execution)。执行也就是BPMN 2.0中 +$$'token'$$+ 的概念。通常执行是指向流程实例当前位置的指针。最后，还可以在流程实例等待外部触发时使用++RuntimeService++，使流程可以继续运行。流程有许多++等待状态(wait states)++，++RuntimeService++服务提供了许多操作用于“通知”流程实例：已经接收到外部触发，流程实例可以继续运行。
 
 
-The ProcessEngines class will scan for all +flowable.cfg.xml+ and +flowable-context.xml+ files. For all +flowable.cfg.xml+ files, the process engine will be built in the typical Flowable way: +ProcessEngineConfiguration.createProcessEngineConfigurationFromInputStream(inputStream).buildProcessEngine()+. For all +flowable-context.xml+ files, the process engine will be built in the Spring way: first the Spring application context is created and then the process engine is obtained from that application context.
+对于像Flowable这样的BPM引擎来说，核心是需要人类用户操作的任务。所有任务相关的东西都组织在**TaskService**中，例如：
 
-All services are stateless. This means that you can easily run Flowable on multiple nodes in a cluster, each going to the same database, without having to worry about which machine actually executed previous calls. Any call to any service is idempotent regardless of where it is executed.
+* 查询分派给用户或组的任务
+* 创建__独立运行(standalone)__任务。这是一种没有关联到流程实例的任务。
+* 决定任务的执行用户(assignee)，或者将用户通过某种方式与任务关联。
+* 认领(claim)与完成(complete)任务。认领是指某人决定成为任务的执行用户，也即他将会完成这个任务。完成任务是指“做这个任务要求的工作”，通常是填写某个表单。
 
-The *RepositoryService* is probably the first service needed when working with the Flowable engine. This service offers operations for managing and manipulating +deployments+ and +process definitions+. Without going into much detail here, a process definition is a Java counterpart of the BPMN 2.0 process. It is a representation of the structure and behavior of each of the steps of a process. A +deployment+ is the unit of packaging within the Flowable engine. A deployment can contain multiple BPMN 2.0 XML files and any other resource. The choice of what is included in one deployment is up to the developer. It can range from a single process BPMN 2.0 XML file to a whole package of processes and relevant resources (for example, the deployment 'hr-processes' could contain everything related to HR processes). The +RepositoryService+ can +deploy+ such packages. Deploying a deployment means it is uploaded to the engine, where all processes are inspected and parsed before being stored in the database. From that point on, the deployment is known to the system and any process included in the deployment can now be started.
+**IdentityService**很简单。它用于管理（创建，更新，删除，查询……）组与用户。请注意，Flowable实际上在运行时并不做任何用户检查。例如任务可以分派给任何用户，而引擎并不会验证系统中是否存在该用户。这是因为Flowable有时要与LDAP、Active Directory等服务结合使用。
 
-Furthermore, this service allows you to:
+**FormService**是可选服务。也就是说Flowable没有它也能很好地运行，而不必牺牲任何功能。这个服务引入了__开始表单(start form)__与__任务表单(task form)__的概念。 __开始表单__是在流程实例启动前显示的表单，而__任务表单__是用户完成任务时显示的表单。Flowable可以在BPMN 2.0流程定义中定义这些表单。表单服务通过简单的方式暴露这些数据。再次重申，表单不一定要嵌入流程定义，因此这个服务是可选的。
 
-* Query on deployments and process definitions known to the engine.
-* Suspend and activate deployments as a whole or specific process definitions. Suspending means no further operations can be performed on them, while activation is the opposite and enables operations again.
-* Retrieve various resources, such as files contained within the deployment or process diagrams that were auto-generated by the engine.
-* Retrieve a POJO version of the process definition, which can be used to introspect the process using Java rather than XML.
+**HistoryService**暴露Flowable引擎收集的所有历史数据。当执行流程时，引擎会保存许多数据（可配置），例如流程实例启动时间、谁在执行哪个任务、完成任务花费的事件、每个流程实例的执行路径，等等。这个服务主要提供查询这些数据的能力。
 
-While the +RepositoryService+ is mostly about static information (data that doesn't change, or at least not a lot), the *RuntimeService* is quite the opposite. It deals with starting new process instances of process definitions. As said above, a +process definition+ defines the structure and behavior of the different steps in a process. A process instance is one execution of such a process definition. For each process definition there typically are many instances running at the same time. The +RuntimeService+ also is the service which is used to retrieve and store +process variables+. This is data that is specific to the given process instance and can be used by various constructs in the process (for example, an exclusive gateway often uses process variables to determine which path is chosen to continue the process). The +Runtimeservice+ also allows you to query on process instances and executions. Executions are a representation of the +$$'token'$$+ concept of BPMN 2.0. Basically, an execution is a pointer to where the process instance currently is. Lastly, the +RuntimeService+ is used whenever a process instance is waiting for an external trigger and the process needs to be continued. A process instance can have various +wait states+ and this service contains various operations to 'signal' to the instance that the external trigger is received and the process instance can be continued.
-
-
-Tasks that need to be performed by human users of the system are core to a BPM engine such as Flowable. Everything around tasks is grouped in the *TaskService*, such as:
-
-* Querying tasks assigned to users or groups
-* Creating new _standalone_ tasks. These are tasks that are not related to a process instances.
-* Manipulating to which user a task is assigned or which users are in some way involved with the task.
-* Claiming and completing a task. Claiming means that someone decided to be the assignee for the task, meaning that this user will complete the task. Completing means 'doing the work of the tasks'. Typically this is filling in a form of sorts.
-
-The *IdentityService* is pretty simple. It supports the management (creation, update, deletion, querying, ...) of groups and users. It is important to understand that Flowable actually doesn't do any checking on users at runtime. For example, a task could be assigned to any user, but the engine doesn't verify whether that user is known to the system. This is because the Flowable engine can also be used in conjunction with services such as LDAP, Active Directory, and so on.
-
-The *FormService* is an optional service. Meaning that Flowable can be used quite happily without it, without sacrificing any functionality. This service introduces the concept of a _start form_ and a _task form_. A _start form_ is a form that is shown to the user before the process instance is started, while a _task form_ is the form that is displayed when a user wants to complete a form. Flowable allows the specification of these forms in the BPMN 2.0 process definition. This service exposes this data in an easy way to work with. But again, this is optional, as forms don't need to be embedded in the process definition.
-
-The *HistoryService* exposes all historical data gathered by the Flowable engine. When executing processes, a lot of data can be kept by the engine (this is configurable), such as process instance start times, who did which tasks, how long it took to complete the tasks, which path was followed in each process instance, and so on. This service exposes mainly query  capabilities to access this data.
-
-The *ManagementService* is typically not needed when coding custom application using Flowable. It allows the retrieval of information about the database tables and table metadata. Furthermore, it exposes query capabilities and management operations for jobs. Jobs are used in Flowable for various things, such as timers, asynchronous continuations, delayed suspension/activation, and so on. Later on, these topics will be discussed in more detail.
-
-The *DynamicBpmnService* can be used to change part of the process definition without needing to redeploy it. You can, for example, change the assignee definition for a user task in a process definition, or change the class name of a service task.
-
-For more detailed information on the service operations and the engine API, see link:$$http://www.flowable.org/docs/javadocs/index.html$$[ the javadocs].
+**ManagementService**通常在用Flowable编写用户应用时不需要使用。它可以读取数据库表与表原始数据的信息，也提供了对作业(job)的查询与管理操作。Flowable中很多地方都使用作业，例如定时器(timer)，异步操作(asynchronous continuation)，延时暂停/激活(delayed suspension/activation)等等。后续会详细介绍这些内容。
 
 
-=== Exception strategy
+**DynamicBpmnService**可用于修改流程定义中的部分内容，而不需要重新部署它。例如可以修改流程定义中一个用户任务的办理人设置，或者修改一个服务任务中的类名。
 
-The base exception in Flowable is the +org.flowable.engine.FlowableException+, an unchecked exception. This exception can be thrown at all times by the API, but 'expected' exceptions that happen in specific methods are documented in link:$$http://www.flowable.org/docs/javadocs/index.html$$[ the javadocs]. For example, an extract from ++TaskService++:
+参考link:$$http://www.flowable.org/docs/javadocs/index.html$$[javadocs]了解服务操作与引擎API的更多信息。
+
+[[_exception_strategy]]
+=== 异常策略
+
+Flowable的异常基类是++org.flowable.engine.FlowableException++，这是一个非受检异常(unchecked exception)。在任何API操作时都可能会抛出这个异常，link:$$http://www.flowable.org/docs/javadocs/index.html$$[javadoc]提供了每个方法可能抛出的异常。例如，从++TaskService++中摘录：
 
 [source,java,linenums]
 ----
 /**
- * Called when the task is successfully executed.
- * @param taskId the id of the task to complete, cannot be null.
- * @throws FlowableObjectNotFoundException when no task exists with the given id.
+ * 当任务成功执行时调用。
+ * @param taskId 需要完成的任务id，不能为null。
+ * @throws FlowableObjectNotFoundException 若给定id找不到任务。
  */
  void complete(String taskId);
 ----
 
-In the example above, when an id is passed for which no task exists, an exception will be thrown. Also, since the javadoc *explicitly states that taskId cannot be null, an +FlowableIllegalArgumentException+ will be thrown when +null+ is passed*.
+在上例中，如果所用的id找不到任务，就会抛出异常。并且，由于javadoc中**明确要求taskId不能为null，因此如果传递了++null++值，会抛出++FlowableIllegalArgumentException++异常**。
 
-Even though we want to avoid a big exception hierarchy, the following subclasses are thrown in specific cases. All other errors that occur during process-execution or API-invocation that don't fit into the possible exceptions below, are thrown as regular ++FlowableExceptions++s.
+尽管我们想避免过大的异常层次结构，但在特定情况下仍然会抛出下述异常子类。所有流程执行与API调用中发生的错误，如果不符合下面列出的异常，会统一抛出++FlowableExceptions++。
 
-* ++FlowableWrongDbException++: Thrown when the Flowable engine discovers a mismatch between the database schema version and the engine version.
-* ++FlowableOptimisticLockingException++: Thrown when an optimistic locking occurs in the data store caused by concurrent access of the same data entry.
-* ++FlowableClassLoadingException++: Thrown when a class requested to load was not found or when an error occurred while loading it (e.g. JavaDelegates, TaskListeners, ...).
-* ++FlowableObjectNotFoundException++: Thrown when an object that is requested or actioned does not exist.
-* ++FlowableIllegalArgumentException++: An exception indicating that an illegal argument has been supplied in a Flowable API-call, an illegal value was configured in the engine's configuration or an illegal value has been supplied or an illegal value is used in a process-definition.
-* ++FlowableTaskAlreadyClaimedException++: Thrown when a task is already claimed, when the +taskService.claim(...)+ is called.
+* ++FlowableWrongDbException++: 当Flowable引擎检测到数据库表结构版本与引擎版本不匹配时抛出。
+* ++FlowableOptimisticLockingException++: 当对同一数据实体的并发访问导致数据存储发生乐观锁异常时抛出。
+* ++FlowableClassLoadingException++: 当需要载入的类（如JavaDelegate, TaskListener, ...）无法找到，或载入发生错误时抛出。
+* ++FlowableObjectNotFoundException++: 当请求或要操作的对象不存在时抛出。
+* ++FlowableIllegalArgumentException++: 当调用Flowable API时使用了不合法的参数时抛出。可能是引擎配置中的不合法值，或者是API调用传递的不合法参数，也可能是流程定义中的不合法值。
+* ++FlowableTaskAlreadyClaimedException++: 当对已被认领的任务调用++taskService.claim(...)++时抛出。
 
 
 [[queryAPI]]
 
 
-=== Query API
+=== 查询API
 
-There are two ways of querying data from the engine: the query API and native queries. The Query API allows you to program completely typesafe queries with a fluent API. You can add various conditions to your queries (all of which are applied together as a logical AND) and precisely one ordering. The following code shows an example:
+从引擎中查询数据有两种方式：查询API与原生(native)查询。查询API可以使用链式API，通过编程方式进行类型安全的查询。你可以在查询中增加各种条件（所有条件都用做AND逻辑），也可以明确指定排序方式。下面是示例代码：
 
 [source,java,linenums]
 ----
@@ -106,7 +107,7 @@ List<Task> tasks = taskService.createTaskQuery()
     .list();
 ----
 
-Sometimes you need more powerful queries, for example, queries using an OR operator or restrictions you cannot express using the Query API. For these cases, we have native queries, which allow you to write your own SQL queries. The return type is defined by the Query object you use and the data is mapped into the correct objects (Task, ProcessInstance, Execution, ...). Since the query will be fired at the database you have to use table and column names as they are defined in the database; this requires some knowledge about the internal data structure and it is recommended to use native queries with care. The table names can be retrieved through the API to keep the dependency as small as possible.
+有时需要更复杂的查询，例如使用OR操作符查询，或者使用查询API不能满足查询条件要求。我们为这种需求提供了可以自己写SQL查询的原生查询。返回类型由使用的查询对象决定，数据会映射到正确的对象中（Task、ProcessInstance、Execution，等等）。查询在数据库中进行，因此需要使用数据库中定义的表名与列名。这需要了解内部数据结构，因此建议小心使用原生查询。数据库表名可以通过API读取，这样可以将依赖关系减到最小。
 
 [source,java,linenums]
 ----
@@ -124,20 +125,21 @@ long count = taskService.createNativeTaskQuery()
 
 [[apiVariables]]
 
-=== Variables
+=== 变量
 
-Every process instance needs and uses data to execute the steps it's made up of. In Flowable, this data is called _variables_, which are stored in the database. Variables can be used in expressions (for example, to select the correct outgoing sequence flow in an exclusive gateway), in Java service tasks when calling external services (for example to provide the input or store the result of the service call), and so on.
+流程实例按步骤执行时，需要使用一些数据。在Flowable中，这些数据称作__变量(variable)__，并会存储在数据库中。变量可以用在表达式中（例如在排他网关中用于选择正确的出口路径），也可以在Java服务任务(service task)中用于调用外部服务（例如为服务调用提供输入或结果存储），等等。
 
-A process instance can have variables (called _process variables_), but also _executions_ (which are specific pointers to where the process is active) and user tasks can have variables. A process instance can have any number of variables. Each variable is stored in a row in the _ACT_RU_VARIABLE_ database table.
+流程实例可以持有变量（称作__流程变量 process variables__）；用户任务以及__执行(executions)__——流程当前活动节点的指针——也可以持有变量。流程实例可以持有任意数量的变量，每个变量存储为__ACT_RU_VARIABLE__数据库表的一行。
 
-All of the _startProcessInstanceXXX_ methods have an optional parameters to provide the variables when the process instance is created and started. For example, from the _RuntimeService_:
+
+所有的__startProcessInstanceXXX__方法都有一个可选参数，用于在流程实例创建及启动时设置变量。例如，在__RuntimeService__中：
 
 [source,java,linenums]
 ----
 ProcessInstance startProcessInstanceByKey(String processDefinitionKey, Map<String, Object> variables);
 ----
 
-Variables can be added during process execution. For example, (_RuntimeService_):
+也可以在流程执行中加入变量。例如，(_RuntimeService_):
 
 [source,java,linenums]
 ----
@@ -147,9 +149,10 @@ void setVariables(String executionId, Map<String, ? extends Object> variables);
 void setVariablesLocal(String executionId, Map<String, ? extends Object> variables);
 ----
 
-Note that variables can be set _local_ for a given execution (remember, a process instance consists of a tree of executions). The variable will only be visible on that execution and not higher in the tree of executions. This can be useful if data shouldn't be propagated to the process instance level, or the variable has a new value for a certain path in the process instance (for example, when using parallel paths).
+请注意可以为给定执行（请记住，流程实例由一颗执行的树(tree of executions)组成）设置__局部(local)__变量。局部变量将只在该执行中可见，对执行树的上层则不可见。这可以用于 数据不应该暴露给流程实例的其他执行，或者变量在流程实例的不同路径中有不同的值（例如使用并行路径时）的情况。
 
-Variables can also be retrieved, as shown below. Note that similar methods exist on the _TaskService_. This means that tasks, like executions, can have local variables that are 'alive' just for the duration of the task.
+可以用下列方法读取变量。请注意__TaskService__中有类似的方法。这意味着任务与执行一样，可以持有局部变量，其生存期为任务持续的时间。
+
 
 [source,java,linenums]
 ----
@@ -161,7 +164,7 @@ Object getVariable(String executionId, String variableName);
 <T> T getVariable(String executionId, String variableName, Class<T> variableClass);
 ----
 
-Variables are often used in <<bpmnJavaServiceTask, Java delegates>>, <<apiExpressions, expressions>>, execution- or tasklisteners, scripts, and so on. In those constructs, the current _execution_ or _task_ object is available and it can be used for variable setting and/or retrieval. The simplest methods are these:
+变量通常用于<<bpmnJavaServiceTask, Java代理（Java delegates）>>、<<apiExpressions, 表达式（expressions）>>、执行（execution）、任务监听器（tasklisteners）、脚本（scripts）等等。在这些结构中，提供了当前的__execution__或__task__对象，可用于变量的设置、读取。简单示例如下：
 
 [source,java,linenums]
 ----
@@ -173,11 +176,11 @@ execution.setVariables(Map<String, object> variables);
 execution.setVariable(String variableName, Object value);
 ----
 
-Note that a variant with _local_ is also available for all of the above.
+请注意也可以使用上例中方法的__局部变量__版本。
 
-For historical (and backwards-compatibility reasons), when doing any of the calls above, behind the scenes *all* variables will be fetched from the database. This means that if you have 10 variables, but only get one through _getVariable("myVariable")_, behind the scenes the other 9 will be fetched and cached. This is not necessarily bad, as subsequent calls will not hit the database again.  For example, when your process definition has three sequential service tasks (and thus one database transaction), using one call to fetch all variables in the first service task might be better then fetching the variables needed in each service task separately. Note that this applies *both* for getting and setting variables.
+由于历史（与向后兼容）原因，当调用上述任何方法时，引擎会从数据库中取出**所有**变量。也就是说，如果你有10个变量，使用__getVariable("myVariable")__获取其中的一个，实际上其他9个变量也会从数据库取出并缓存。这并不坏，因为后续的调用可以不必再读取数据库。比如，如果流程定义包含三个连续的服务任务（因此它们在同一个数据库事务里），在第一个服务任务里通过一次调用获取全部变量，也许比在每个服务任务里分别获取需要的变量要好。请注意对读取与设置变量**都是这样**。
 
-Of course, when using a lot of variables or simply when you want tight control on the database query and traffic, this is not appropriate. Additional methods have been introduced to give a tighter control on this, by adding in new methods that have an optional parameter that tells the engine whether or not to fetch and cache all variables:
+当然，如果使用大量变量，或者你希望精细控制数据库查询与流量，上述的做法就不合适了。我们引入了可以更精细控制的方法。这个方法有一个可选的参数，告诉引擎是否需要读取并缓存所有变量：
 
 [source,java,linenums]
 ----
@@ -186,34 +189,36 @@ Object getVariable(String variableName, boolean fetchAllVariables);
 void setVariable(String variableName, Object value, boolean fetchAllVariables);
 ----
 
-When using _true_ for the parameter _fetchAllVariables_, the behavior will be exactly as described above: when getting or setting a variable, all other variables will be fetched and cached.
+当__fetchAllVariables__参数为__true__时，行为与上面描述的完全一样：读取或设置一个变量时，所有的变量都将被读取并缓存。
 
-However, when using _false_ as value, a specific query will be used and no other variables will be fetched or cached. Only the value of the variable in question here will be cached for subsequent use.
+而当参数值为__false__时，会使用明确的查询，其他变量不会被读取或缓存。只有指定的变量的值会被缓存并用于后续使用。
+
 
 [[apiTransientVariables]]
 
-=== Transient variables
+=== 瞬时变量
 
-Transient variables are variables that behave like regular variables, but are not persisted. Typically, transient variables are used for advanced use cases.  When in doubt, use a regular process variable.
+瞬时变量(Transient variable)类似普通变量，只是不会被持久化。通常来说，瞬时变量用于高级使用场景。如果不明确，还是使用普通流程变量为好。
 
-The following applies for transient variables:
+瞬时变量具有下列特性：
 
-* There is no history stored at all for transient variables.
-* Like _regular_ variables, transient variables are put on the _highest parent_ when set. This means that when setting a variable on an execution, the transient variable is actually stored on the process instance execution. Like regular variables, a _local_ variant of the method exists if the variable is set on the specific execution or task.
-* A transient variable can only be accessed before the next 'wait state' in the process definition. After that, they are gone. Here, the wait state means the point in the process instance where it is persisted to the data store. Note that an _async_ activity is also a 'wait state' in this definition!
-* Transient variables can only be set by the _setTransientVariable(name, value)_, but transient variables are also returned when calling _getVariable(name)_ (a _getTransientVariable(name)_ also exists, that only checks the transient variables). The reason for this is to make the writing of expressions easy and existing logic using variables works for both types.
-* A transient variable _shadows_ a persistent variable with the same name. This means that when both a persistent and transient variable is set on a process instance and _getVariable("someVariable")_ is called, the transient variable value will be returned.
+* 瞬时变量完全不存储历史。
+* 与__普通__变量类似，设置瞬时变量时会存入__最上层父__中。这意味着在一个执行中设置一个变量时，瞬时变量实际上会存储在流程实例执行中。与普通变量类似，可以使用__局部(local)__的对应方法，将变量设置为某个执行或任务的局部变量。
+* 瞬时变量只能在下一个“等待状态”之前访问。之后该变量即消失。等待状态意味着流程实例会持久化至数据存储中。请注意在这个定义中，__异步__活动也是“等待状态”！
+* 只能使用__setTransientVariable(name, value)__设置瞬时变量，但是调用__getVariable(name)__也会返回瞬时变量（也有__getTransientVariable(name)__方法，它只会返回瞬时变量）。这是为了简化表达式的撰写，并保证已有逻辑可以使用这两种类型的变量。
+* 瞬时变量__屏蔽(shadow)__同名的持久化变量。也就是说当一个流程实例中设置了同名的持久化变量与瞬时变量时，__getVariable("someVariable")__会返回瞬时变量的值。
 
-You can set and get transient variables in most places where regular variables are exposed:
+在大多数可以使用普通变量的地方，都可以获取、设置瞬时变量：
 
-* On _DelegateExecution_ in _JavaDelegate_ implementations
-* On _DelegateExecution_ in _ExecutionListener_ implementations and on _DelegateTask_ on _TaskListener_ implementations
-* In script task via the _execution_ object
-* When starting a process instance through the runtime service
-* When completing a task
-* When calling the _runtimeService.trigger_ method
+* 在__JavaDelegate__实现中的__DelegateExecution__内
+* 在__ExecutionListener__实现中的__DelegateExecution__内，以及在__TaskListener__实现中的__DelegateTask__内
+* 通过__execution__对象在脚本任务内
+* 通过RuntimeService启动流程实例时
+* 完成任务时
+* 调用__runtimeService.trigger__方法时
 
-The methods follow the naming convention of the regular process variables:
+
+瞬时变量相关的方法遵循普通流程变量方法的命名约定：
 
 [source,java,linenums]
 ----
@@ -232,11 +237,11 @@ void removeTransientVariable(String variableName);
 void removeTransientVariableLocal(String variableName);
 ----
 
-The following BPMN diagram shows a typical example:
+下面的BPMN流程图展示了一个典型例子：
 
 image::images/api.transient.variable.example.png[align="center"]
 
-Let's assume the 'Fetch Data' service task calls some remote service (for example, using REST). Let's also assume some configuration parameters are needed and need to be provided when starting the process instance. Also, these configuration parameters are not important for historical audit purposes, so we pass them as transient variables:
+假设'Fetch Data(获取数据)'服务任务调用某个远程服务（例如使用REST）。也假设需要其需要一些配置参数，并需要在启动流程实例时提供。同时，这些配置参数对于历史审计并不重要，因此我们将它们作为瞬时变量传递：
 
 [source,java,linenums]
 ----
@@ -248,9 +253,10 @@ ProcessInstance processInstance = runtimeService.createProcessInstanceBuilder()
        .start();
 ----
 
-Note that the transient variables will be available until the user task is reached and persisted to the database. For example, in the 'Additional Work' user task they are no longer available. Also note that if 'Fetch Data' had been asynchronous, they wouldn't be available after that step either.
+请注意在到达用户任务并持久化之前，都可以使用这些瞬时变量。例如，在'Additional Work(额外工作)'用户任务中它们就不再可用。也请注意如果'Fetch Data'是异步的，则瞬时变量在该步骤之后也不再可用。
 
-The 'Fetch Data' (simplified) could be something like:
+
+'Fetch Data'（的简化版本）可以像是：
 
 [source,java,linenums]
 ----
@@ -259,16 +265,16 @@ public static class FetchDataServiceTask implements JavaDelegate {
     String configParam01 = (String) execution.getVariable(configParam01);
     // ...
 
-    RestResponse restResponse = executeRestCall();
+    RestReponse restResponse = executeRestCall();
     execution.setTransientVariable("response", restResponse.getBody());
     execution.setTransientVariable("status", restResponse.getStatus());
   }
 }
 ----
 
-The 'Process Data' would get the response transient variable, parse it and store the relevant data in real process variables as we need them later.
+'Process Data（处理数据）'可以获取response瞬时变量，解析并将其相关数据存储在实际流程变量中，因为之后还需要使用它们。
 
-The condition on the sequence flow leaving the exclusive gateway are oblivious to whether persistent or transient variables are used (in this case, the _status_ transient variable):
+离开排他网关的顺序流上的条件表达式，不关注使用的是持久化还是瞬时变量（在这个例子中__status__是瞬时变量）：
 
 [source,xml,linenums]
 ----
@@ -278,21 +284,20 @@ The condition on the sequence flow leaving the exclusive gateway are oblivious t
 [[apiExpressions]]
 
 
-=== Expressions
+=== 表达式
 
-Flowable uses UEL for expression-resolving. UEL stands for _Unified Expression Language_ and is part of the EE6 specification (see link:$$http://docs.oracle.com/javaee/6/tutorial/doc/gjddd.html$$[ the EE6 specification] for detailed information).
+Flowable使用UEL进行表达式解析。UEL代表__Unified Expression Language__，是EE6规范的一部分（查看link:$$http://docs.oracle.com/javaee/6/tutorial/doc/gjddd.html$$[EE6规范]了解更多信息）。
 
-Expressions can be used in, for example, <<bpmnJavaServiceTaskXML,Java Service tasks>>, <<executionListeners,Execution Listeners>>, <<taskListeners,Task Listeners>> and <<conditionalSequenceFlowXml,Conditional sequence flows>>. Although there are two types of expressions, value-expression and method-expression, Flowable abstracts this so they can both be used where an +expression+ is expected.
+表达式可以用于<<bpmnJavaServiceTaskXML,Java服务任务(Java Service task)>>、<<executionListeners, 执行监听器(Execution Listener)>>、<<taskListeners, 任务监听器(Task Listener)>> 与 <<conditionalSequenceFlowXml, 条件顺序流(Conditional sequence flow)>>等。尽管有值表达式与方法表达式这两种不同的表达式，Flowable通过抽象，使它们都可以在需要++表达式++的地方使用。
 
-* *Value expression*: resolves to a value. By default, all process variables are available to use. Also, all spring-beans (if using Spring) are available to use in expressions. Some examples:
+* **值表达式 Value expression**: 解析为一个值。默认情况下，所有流程变量都可以使用。（若使用Spring）所有的Spring bean也可以用在表达式里。例如：
 
 ----
 ${myVar}
 ${myBean.myProperty}
 ----
 
-
-* *Method expression*: invokes a method with or without parameters. *When invoking a method without parameters, be sure to add empty parentheses after the method-name (as this distinguishes the expression from a value expression).* The passed parameters can be literal values or expressions that are resolved themselves. Examples:
+* **方法表达式 Method expression**: 调用一个方法，可以带或不带参数。**当调用不带参数的方法时，要确保在方法名后添加空括号（以避免与值表达式混淆）。**传递的参数可以是字面值(literal value)，也可以是表达式，它们会被自动解析。例如：
 
 ----
 ${printer.print()}
@@ -300,157 +305,30 @@ ${myBean.addNewOrder('orderName')}
 ${myBean.doSomething(myVar, execution)}
 ----
 
+请注意，表达式支持解析（及比较）原始类型(primitive)、bean、list、array与map。
 Note that these expressions support resolving primitives (including comparing them), beans, lists, arrays and maps.
 
-On top of all process variables, there are a few default objects available that can be used in expressions:
+除了所有流程变量外，还有一些默认对象可在表达式中使用：
 
-* ++execution++: The +DelegateExecution+ holds additional information about the ongoing execution.
-* ++task++: The +DelegateTask+ holds additional information about the current Task. *Note: Only works in expressions evaluated from task listeners.*
-* ++authenticatedUserId++: The id of the user that is currently authenticated. If no user is authenticated, the variable is not available.
+* ++execution++: +DelegateExecution++，持有正在运行的执行的额外信息。
+* ++task++: ++DelegateTask++持有当前任务的额外信息。**请注意：只在任务监听器的表达式中可用。**
+* ++authenticatedUserId++: 当前已验证的用户id。如果没有已验证的用户，该变量不可用。
 
-For more concrete usage and examples, check out <<springExpressions,Expressions in Spring>>, <<bpmnJavaServiceTaskXML,Java Service tasks>>, <<executionListeners,Execution Listeners>>,  <<taskListeners,Task Listeners>> or <<conditionalSequenceFlowXml,Conditional sequence flows>>.
-
-
-[[expressionsFunctions]]
-
-=== Expression functions
-
-[Experimental] Expression functions have been added in version 6.4.0.
-
-To make working with process variables easier, a set of out-of-the-box functions is available, under the _variables_ namespace.
-
-* *variables:get(varName)*: Retrieves the value of a variable. The main difference with writing the variable name directly in the expression is that using this function won't throw an exception when the variable doesn't exist. For example _${myVariable == "hello"}_ would throw an exception if _myVariable_ doesn't exist, but _${var:get(myVariable) == 'hello'}_ will just work.
-* *variables:getOrDefault(varName, defaultValue)*: similar to _get_, but with the option of providing a default value which is returned when the variable isn't set or the value is _null_.
-* *variables:exists(varName)*: Returns _true_ if the variable has a non-null value.
-* *variables:isEmpty(varName)* (alias _:empty_) : Checks if the variable value is not empty. Depending on the variable type, the behavior is the following:
-** For String variables, the variable is deemed empty if it's the empty string. 
-** For +java.util.Collection+ variables, _true_ is returned if the collection has no elements.
-** For +ArrayNode+ variables, _true_ is returned if there are no elements
-** In case the variable is _null_, _true_ is always returned  
-* *variables:isNotEmpty(varName)* (alias _:notEmpty_) : the reverse operation of _isEmpty_.
-* *variables:equals(varName, value)* (alias _:eq_) : checks if a variable is equal to a given value. This is a shorthand function for an expression that would otherwise be written as _${execution.getVariable("varName") != null && execution.getVariable("varName") == value}_.
-** If the variable value is null, false is returned (unless compared to null).
-* *variables:notEquals(varName, value)* (alias _:ne_) : the reverse comparison of _equals_.
-* *variables:contains(varName, value1, value2, ...)*: checks if *all* values provided are contained within a variable. Depending on the variable type, the behavior is the following:
-** For String variables, the passed values are used as substrings that need to be part of the variable
-** For +java.util.Collection+ variables, all the passed values need to be an element of the collection (regular _contains_ semantics).
-** For +ArrayNode+ variables: supports checking if the arraynode contains a JsonNode for the types that are supported as variable type
-** When the variable value is null, false is returned in all cases. When the variable value is not null, and the instance type is not one of the types above, false will be returned.
-* *variables:containsAny(varName, value1, value2, ...)* : similar to the _contains_ function, but _true_ will be returned if *any* (and not all) the passed values is contained in the variable.
-* Comparator functions:
-** *variables:lowerThan(varName, value)* (alias _:lessThan_ or  _:lt_) : shorthand for _${execution.getVariable("varName") != null && execution.getVariable("varName") < value}_
-** *variables:lowerThanOrEquals(varName, value)* (alias _:lessThanOrEquals_ or _:lte_) : similar, but now for _< =_
-** *variables:greaterThan(varName, value)* (alias _:gt_) : similar, but now for _>_
-** *variables:greaterThanOrEquals(varName, value)* (alias _:gte_) : similar, but now for _> =_
-
-The _variables_ namespace is aliased to _vars_ or _var_. So _variables:get(varName)_ is equivalent to writing _vars:get(varName)_ or _var:get(varName)_. Note that it's not needed to put quotes around the variable name: _var:get(varName)_ is equivalent to _var:get(\'varName')_ or _var:get("varName")_.
- 
-Also note that in none of the functions above the _execution_ needs to be passed into the function (as would be needed when not using a function). The engine will inject the appropriate variable scope when invoking the function. This also means that these functions can be used in exactly the same way when writing expression in CMMN case definitions.
-
-Additionally, it's possible to register custom functions that can be used in expressions. See the +org.flowable.common.engine.api.delegate.FlowableFunctionDelegate+ interface for more information.
-
+更多实际使用例子，请查看<<springExpressions,Spring中的表达式>>、<<bpmnJavaServiceTaskXML,Java服务任务>>、<<executionListeners,执行监听器>>、<<taskListeners,任务监听器>>或者<<conditionalSequenceFlowXml,条件顺序流>>等章节。
 
 
 [[apiUnitTesting]]
 
+=== 单元测试
 
-=== Unit testing
+业务流程是软件项目的必要组成部分，也需要使用测试一般应用逻辑的方法——单元测试——测试它们。Flowable是嵌入式的Java引擎，因此为业务流程编写单元测试就同编写一般的单元测试一样简单。
 
-Business processes are an integral part of software projects and they should be tested in the same way normal application logic is tested: with unit tests. Since Flowable is an embeddable Java engine, writing unit tests for business processes is as simple as writing regular unit tests.
+Flowable支持JUnit 3及4的单元测试风格。按照JUnit 3的风格，必须扩展(extended)++org.flowable.engine.test.FlowableTestCase++。它通过保护(protected)成员变量提供对ProcessEngine与服务的访问。在测试的++setup()++中，processEngine会默认使用classpath中的++flowable.cfg.xml++资源初始化。如果要指定不同的配置文件，请覆盖__getConfigurationResource()__方法。当使用相同的配置资源时，流程引擎会静态缓存，用于多个单元测试。
 
-Flowable supports JUnit versions 3, 4 and 5 styles of unit testing.
+通过扩展++FlowableTestCase++，可以使用++org.flowable.engine.test.Deployment++注解测试方法。在测试运行前，会部署与测试类在同一个包下的格式为++testClassName.testMethod.bpmn20.xml++的资源文件。在测试结束时，会删除这个部署，包括所有相关的流程实例、任务，等等。也可以使用++Deployment++注解显式指定资源位置。查看该类以获得更多信息。
 
-In the JUnit 5 style one needs to use the +org.flowable.engine.test.FlowableTest+ annotation or register the +org.flowable.engine.test.FlowableExtension+ manually.
-The +FlowableTest+ annotation is just a meta annotation and the does the registration of the +FlowableExtension+ (i.e. it does +@ExtendWith(FlowableExtension.class)+).
-This will make the ProcessEngine and the services available as parameters into the test and lifecycle methods (+@BeforeAll+, +@BeforeEach+, +@AfterEach+, +@AfterAll+).
-Before each test the processEngine will be initialized by default with the +flowable.cfg.xml+ resource on the classpath.
-In order to specify a different configuration file the +org.flowable.engine.test.ConfigurationResource+ annotation needs to be used (see second example).
-Process engines are cached statically over multiple unit tests when the configuration resource is the same.
+综上所述，JUnit 3风格的测试看起来类似：
 
-By using +FlowableExtension+, you can annotate test methods with +org.flowable.engine.test.Deployment+.
-When a test method is annotated with +@Deployment+, before each test the bpmn files defined in +Deployment#resources+ will be deployed.
-In case there are no resources defined, a resource file of the form +testClassName.testMethod.bpmn20.xml+ in the same package as the test class, will be deployed.
-At the end of the test, the deployment will be deleted, including all related process instances, tasks, and so on.
-See the +Deployment+ class for more information.
-
-Taking all that in account, a JUnit 5 test looks as follows:
-
-.JUnit 5 test with default resource
-[source,java,linenums]
-----
-@FlowableTest
-class MyBusinessProcessTest {
-
-  private ProcessEngine processEngine;
-  private RuntimeService runtimeService;
-  private TaskService taskService;
-
-  @BeforeEach
-  void setUp(ProcessEngine processEngine) {
-    this.processEngine = processEngine;
-    this.runtimeService = processEngine.getRuntimeService();
-    this.taskService = processEngine.getTaskService();
-  }
-
-  @Test
-  @Deployment
-  void testSimpleProcess() {
-    runtimeService.startProcessInstanceByKey("simpleProcess");
-
-    Task task = taskService.createTaskQuery().singleResult();
-    assertEquals("My Task", task.getName());
-
-    taskService.complete(task.getId());
-    assertEquals(0, runtimeService.createProcessInstanceQuery().count());
-  }
-}
-----
-
-[TIP]
------
-With JUnit 5 you can also inject the id of the deployment (with +org.flowable.engine.test.DeploymentId+_) into your test and lifecycle methods.
------
-
-.JUnit 5 test with a custom resource file
-[source,java,linenums]
-----
-@FlowableTest
-@ConfigurationResource("flowable.custom.cfg.xml")
-class MyBusinessProcessTest {
-
-  private ProcessEngine procesEngine;
-  private RuntimeService runtimeService;
-  private TaskService taskService;
-
-  @BeforeEach
-  void setUp(ProcessEngine processEngine) {
-    this.processEngine = processEngine;
-    this.runtimeService = processEngine.getRuntimeService();
-    this.taskService = processEngine.getTaskService();
-  }
-
-  @Test
-  @Deployment
-  void testSimpleProcess() {
-    runtimeService.startProcessInstanceByKey("simpleProcess");
-
-    Task task = taskService.createTaskQuery().singleResult();
-    assertEquals("My Task", task.getName());
-
-    taskService.complete(task.getId());
-    assertEquals(0, runtimeService.createProcessInstanceQuery().count());
-  }
-}
-----
-
-
-In the JUnit 3 style, the +org.flowable.engine.test.FlowableTestCase+ must be extended. This will make the ProcessEngine and the services available through protected member fields. In the +setup()+ of the test,  the processEngine will be initialized by default with the +flowable.cfg.xml+ resource on the classpath.  To specify a different configuration file, override the _getConfigurationResource()_ method. Process engines are cached statically over multiple unit tests when the configuration resource is the same.
-
-As with the +FlowableExtension+ (see above), extending the +FlowableTestCase+ will enable the use of the +org.flowable.engine.test.Deployment+ annotation (see above for an explanation of its use and configuration). Before the test is run, a resource file of the form +testClassName.testMethod.bpmn20.xml+ in the same package as the test class, will be deployed. At the end of the test, the deployment will be deleted, including all related process instances, tasks, and so on. The +Deployment+ annotation also supports setting the resource location explicitly. See the class itself for more information.
-
-Taking all that in account, a JUnit 3 style test looks as follows.
-
-.JUnit 3 test with default resource file
 [source,java,linenums]
 ----
 public class MyBusinessProcessTest extends FlowableTestCase {
@@ -468,12 +346,10 @@ public class MyBusinessProcessTest extends FlowableTestCase {
 }
 ----
 
-To get the same functionality when using the JUnit 4 style of writing unit tests, the +org.flowable.engine.test.FlowableRule+ Rule must be used. Through this rule, the process engine and services are available through getters.
-As with the +FlowableExtension+ (see above), including this +Rule+ will enable the use of the +org.flowable.engine.test.Deployment+ annotation (see above for an explanation of its use and configuration) and it will look for the default configuration file on the classpath. Process engines are statically cached over multiple unit tests when using the same configuration resource.
+要使用JUnit 4的风格书写单元测试并达成同样的功能，必须使用++org.flowable.engine.test.FlowableRule++ Rule。这样能够通过它的getter获得流程引擎与服务。对于++FlowableTestCase++（上例），包含++@Rule++就可以使用++org.flowable.engine.test.Deployment++注解（参见上例解释其用途及配置），并且会自动在classpath中寻找默认配置文件。当使用相同的配置资源时，流程引擎会静态缓存，以用于多个单元测试。
 
-The following code snippet shows an example of using the JUnit 4 style of testing and the usage of the +FlowableRule+.
+下面的代码片段展示了JUnit 4风格的测试与++FlowableRule++的用法。
 
-.JUnit 4 test with default resource file
 [source,java,linenums]
 ----
 public class MyBusinessProcessTest {
@@ -500,31 +376,31 @@ public class MyBusinessProcessTest {
 [[apiDebuggingUnitTest]]
 
 
-=== Debugging unit tests
+=== 调试单元测试
 
-When using the in-memory H2 database for unit tests, the following instructions allow you to easily inspect the data in the Flowable database during a debugging session. The screenshots here are taken in Eclipse, but the mechanism should be similar for other IDEs.
+当使用H2内存数据库进行单元测试时，下面的方法可以让你在调试过程中方便地检查Flowable数据库中的数据。截图来自Eclipse，但其他IDE方式相似。
 
-Suppose we have put a _breakpoint_ somewhere in our unit test (in Eclipse this is done by double-clicking in the left border next to the code):
+假设我们的单元测试的某处放置了__断点(breakpoint)__（在Eclipse里可以通过在代码左侧条上双击实现）：
 
 image::images/api.test.debug.breakpoint.png[align="center"]
 
-If we now run the unit test in _debug_ mode (right-click in test class, select 'Run as' and then 'JUnit test'), the test execution halts at our breakpoint, where we can now inspect the variables of our test as shown in the right upper panel.
+如果我们在__debug__模式（在测试类中右键，选择“Run as”，然后选择“JUnit test”）下运行单元测试，测试进程会在断点处暂停，这样我们就可以在右上窗口中查看测试中的变量。
 
 image::images/api.test.debug.view.png[align="center"]
 
-To inspect the Flowable data, open up the _'Display'_ window (if this window isn't there, open Window->Show View->Other and select _Display_.) and type (code completion is available) +org.h2.tools.Server.createWebServer("-web").start()+
+要检查Flowable的数据，打开__Display__窗口（如果没有找到这个窗口，打开 Window->Show View->Other，然后选择__Display__），并键入（可以使用代码补全）++org.h2.tools.Server.createWebServer("-web").start()++
 
 image::images/api.test.debug.start.h2.server.png[align="center"]
 
-Select the line you've just typed and right-click on it. Now select 'Display' (or execute the shortcut instead of right-clicking)
+选中刚键入的行并右键点击。然后选择'Display'（或者用快捷键执行）
 
 image::images/api.test.debug.start.h2.server.2.png[align="center"]
 
-Now open up a browser and go to link:$$http://localhost:8082$$[http://localhost:8082], and fill in the JDBC URL to the in-memory database (by default this is ++jdbc:h2:mem:flowable++), and hit the connect button.
+现在打开浏览器并访问link:$$http://localhost:8082$$[http://localhost:8082]，填入内存数据库的JDBC URL（默认为++jdbc:h2:mem:flowable++），然后点击connect按钮。
 
 image::images/api.test.debug.h2.login.png[align="center"]
 
-You can now see the Flowable data and use it to understand how and why your unit test is executing your process in a certain way.
+这样就可以看到Flowable的数据。便于理解单元测试执行流程的方式。
 
 image::images/api.test.debug.h2.tables.png[align="center"]
 
@@ -533,11 +409,12 @@ image::images/api.test.debug.h2.tables.png[align="center"]
 [[apiProcessEngineInWebApp]]
 
 
-=== The process engine in a web application
+=== Web应用中的流程引擎
 
-The +ProcessEngine+ is a thread-safe class and can easily be shared among multiple threads. In a web application, this means it is possible to create the process engine once when the container boots and shut down the engine when the container goes down.
+++ProcessEngine++是线程安全的类，可以很容易地在多个线程间共享。在web应用中，这意味着可以在容器启动时创建引擎，并在容器关闭时关闭引擎。
 
-The following code snippet shows how you can write a simple +ServletContextListener+ to initialize and destroy process engines in a plain Servlet environment:
+下面的代码片段展示了如何在Servlet环境中，通过++ServletContextListener++初始化与销毁流程引擎。
+
 
 [source,java,linenums]
 ----
@@ -554,22 +431,20 @@ public class ProcessEnginesServletContextListener implements ServletContextListe
 }
 ----
 
-The +contextInitialized+ method will delegate to +ProcessEngines.init()+. That will look for +flowable.cfg.xml+ resource files on the classpath, and create a +ProcessEngine+ for the given configurations (for example, multiple JARs with a configuration file). If you have multiple such resource files on the classpath, make sure they all have different names. When the process engine is needed, it can be fetched using:
+++contextInitialized++方法会调用++ProcessEngines.init()++。它会在classpath中查找++flowable.cfg.xml++资源文件，并为每个文件分别创建++ProcessEngine++（如果多个JAR都包含配置文件）。如果在classpath中有多个这样的资源文件，请确保它们使用不同的引擎名。需要使用流程引擎时，可以这样获取：
 
 [source,java,linenums]
 ----
 ProcessEngines.getDefaultProcessEngine()
 ----
 
-or
+或者
 
 [source,java,linenums]
 ----
 ProcessEngines.getProcessEngine("myName");
 ----
 
-Of course, it is also possible to use any of the variants of creating a process engine,
-as described in the <<configuration,configuration section>>.
+当然，就像<<configuration, 配置>>章节中介绍的，还可以使用各种不同的方式创建流程引擎。
 
-
-The +contextDestroyed+ method of the context-listener delegates to +ProcessEngines.destroy()+. That will properly close all initialized process engines.
+context-listener的++contextDestroyed++方法会调用++ProcessEngines.destroy()++。它会妥善关闭所有已初始化的流程引擎。

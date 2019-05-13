@@ -1,12 +1,12 @@
 [[springintegration]]
 
-== Spring integration
+== 集成Spring
 
-While you can definitely use Flowable without Spring, we've provided some very nice integration features that are explained in this chapter.
+尽管完全可以脱离Spring使用Flowable，我们仍提供了很多非常好的集成特性，并将在这一章节介绍。
 
 === ProcessEngineFactoryBean
 
-The +ProcessEngine+ can be configured as a regular Spring bean. The starting point of the integration is the class +org.flowable.spring.ProcessEngineFactoryBean+. That bean takes a process engine configuration and creates the process engine.  This means that the creation and configuration of properties for Spring is the same as documented in the <<configuration,configuration section>>. For Spring integration, the configuration and engine beans will look like this:
+可以将++ProcessEngine++配置为普通的Spring bean。入口是++org.flowable.spring.ProcessEngineFactoryBean++类。这个bean处理流程引擎配置，并创建流程引擎。所以在Spring中创建与设置的参数与<<configuration,配置>>章节中介绍的相同。Spring集成所用的配置与引擎bean为：
 
 [source,xml,linenums]
 ----
@@ -20,17 +20,16 @@ The +ProcessEngine+ can be configured as a regular Spring bean. The starting poi
 
 ----
 
-Note that the +processEngineConfiguration+ bean now uses the +org.flowable.spring.SpringProcessEngineConfiguration+ class.
+请注意++processEngineConfiguration++ bean现在使用++org.flowable.spring.SpringProcessEngineConfiguration++类。
 
+[[_transactions]]
+=== 事务
 
-=== Transactions
+我们会逐步说明(Flowable)发行版里，Spring示例中的++SpringTransactionIntegrationTest++。下面是我们示例中使用的Spring配置文件（SpringTransactionIntegrationTest-context.xml）。下面的小节包含了dataSource(数据源)，transactionManager(事务管理器)，processEngine(流程引擎)以及Flowable引擎服务。
 
-We'll explain the +SpringTransactionIntegrationTest+ found in the Spring examples of the distribution step by step.  Below is the Spring configuration file that we use in this example (you can find it in SpringTransactionIntegrationTest-context.xml). The section shown below contains the dataSource, transactionManager, processEngine and the Flowable engine services.
+将DataSource传递给++SpringProcessEngineConfiguration++（使用“dataSource”参数）时，Flowable会在内部使用++org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy++对得到的数据源进行包装（wrap）。这是为了保证从数据源获取的SQL连接与Spring的事务可以协同工作。这样也就不需要在Spring配置中对数据源进行代理（proxy）。但仍然可以将代理++TransactionAwareDataSourceProxy++传递给++SpringProcessEngineConfiguration++——在这种情况下，不会再进行包装。
 
-
-When passing the DataSource to the +SpringProcessEngineConfiguration+ (using property "dataSource"), Flowable uses a +org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy+ internally, which wraps the passed DataSource. This is done to make sure the SQL connections retrieved from the DataSource and the Spring transactions play well together. This implies that it's no longer necessary to proxy the dataSource yourself in Spring configuration, although it's still possible to pass a +TransactionAwareDataSourceProxy+ into the +SpringProcessEngineConfiguration+. In this case, no additional wrapping will occur.
-
-*Make sure when declaring a +TransactionAwareDataSourceProxy+ in Spring configuration yourself that you don't use it for resources that are already aware of Spring transactions (e.g. DataSourceTransactionManager and JPATransactionManager need the un-proxied dataSource).*
+**请确保如果自行在Spring配置中声明了++TransactionAwareDataSourceProxy++，则不要将它用在已经配置Spring事务的资源上（例如DataSourceTransactionManager与JPATransactionManager。它们需要未经代理的数据源）。**
 
 [source,xml,linenums]
 ----
@@ -76,8 +75,7 @@ When passing the DataSource to the +SpringProcessEngineConfiguration+ (using pro
 ...
 ----
 
-
-The remainder of that Spring configuration file contains the beans and configuration that we'll use in this particular example:
+这个Spring配置文件也包含了在这个示例中要用到的bean与配置：
 
 [source,xml,linenums]
 ----
@@ -94,7 +92,8 @@ The remainder of that Spring configuration file contains the beans and configura
 </beans>
 ----
 
-First, the application context is created using any of the ways supported by Spring. In this example, you could use a classpath XML resource to configure our Spring application context:
+可以使用任何Spring支持的方式创建应用上下文(application context)。在这个例子中，可以使用classpath中的XML资源配置来创建Spring应用上下文：
+
 
 [source,java,linenums]
 ----
@@ -102,7 +101,7 @@ ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationC
 	"org/flowable/examples/spring/SpringTransactionIntegrationTest-context.xml");
 ----
 
-or, as it's a test:
+或者在单元测试中：
 
 [source,java,linenums]
 ----
@@ -110,8 +109,7 @@ or, as it's a test:
   "classpath:org/flowable/spring/test/transaction/SpringTransactionIntegrationTest-context.xml")
 ----
 
-
-Then we can get the service beans and invoke methods on them.  The ProcessEngineFactoryBean will have added an extra interceptor to the services that applies Propagation.REQUIRED transaction semantics on the Flowable service methods.  So, for example, we can use the repositoryService to deploy a process like this:
+然后就可以获取服务bean，并调用它们的方法。ProcessEngineFactoryBean会为服务加上额外的拦截器(interceptor)，并为Flowable服务方法设置Propagation.REQUIRED事务级别。这样，我们就可以使用repositoryService部署流程：
 
 [source,java,linenums]
 ----
@@ -125,7 +123,7 @@ String deploymentId = repositoryService
 
 ----
 
-The other way around also works.  In this case, the Spring transaction will be around the userBean.hello() method and the Flowable service method invocation will join that same transaction.
+还有另一种方法也可以使用。如果userBean.hello()方法在Spring事务中，Flowable服务方法调用就会加入这个事务。
 
 [source,java,linenums]
 ----
@@ -133,20 +131,20 @@ UserBean userBean = (UserBean) applicationContext.getBean("userBean");
 userBean.hello();
 ----
 
-The UserBean looks like this.  Remember, from above in the Spring bean configuration, we injected the repositoryService into the userBean.
+UserBean看起来像下面这样。请记着在上面的Spring bean配置中，我们已经将repositoryService注入了userBean。
 
 [source,java,linenums]
 ----
 public class UserBean {
 
-  /** injected by Spring */
+  /** 已经由Spring注入 */
   private RuntimeService runtimeService;
 
   @Transactional
   public void hello() {
-    // here you can do transactional stuff in your domain model
-    // and it will be combined in the same transaction as
-    // the startProcessInstanceByKey to the Flowable RuntimeService
+    // 可以在你的领域模型（domain model）中进行事务操作，
+    // 它会与Flowable RuntimeService的startProcessInstanceByKey
+    // 合并在同一个事务里
     runtimeService.startProcessInstanceByKey("helloProcess");
   }
 
@@ -159,9 +157,9 @@ public class UserBean {
 [[springExpressions]]
 
 
-=== Expressions
+=== 表达式
 
-When using the ProcessEngineFactoryBean, all <<apiExpressions,expressions>> in the BPMN processes will also 'see' all the Spring beans, by default. It's possible to limit the beans (even none) you want to expose in expressions using a map that you can configure.  The example below exposes a single bean (printer), available to use under the key "printer".  *To have NO beans exposed at all, just pass an empty list as 'beans' property on the SpringProcessEngineConfiguration. When no 'beans' property is set, all Spring beans in the context will be available.*
+当使用ProcessEngineFactoryBean时，默认BPMN流程中所有的<<apiExpressions,表达式>>都可以“看见”所有的Spring bean。可以通过配置的map，限制表达式能使用的bean，甚至可以完全禁止表达式使用bean。下面的例子只暴露了一个bean（printer），可以使用“printer”作为key访问。**要完全禁止表达式使用bean，可以将SpringProcessEngineConfiguration的‘beans’参数设为空list。如果不设置‘beans’参数，则上下文中的所有bean都将可以使用。**
 
 [source,xml,linenums]
 ----
@@ -177,8 +175,7 @@ When using the ProcessEngineFactoryBean, all <<apiExpressions,expressions>> in t
 <bean id="printer" class="org.flowable.examples.spring.Printer" />
 ----
 
-Now the exposed beans can be used in expressions: for example, the SpringTransactionIntegrationTest +hello.bpmn20.xml+ shows how a method on a Spring bean can be invoked using a UEL method expression:
-
+这样就可以在表达式中使用这个bean了。例如，SpringTransactionIntegrationTest ++hello.bpmn20.xml++展示了如何通过UEL方法表达式(method expression)调用Spring bean：
 
 [source,xml,linenums]
 ----
@@ -199,7 +196,7 @@ Now the exposed beans can be used in expressions: for example, the SpringTransac
 </definitions>
 ----
 
-Where +Printer+ looks like this:
+其中++Printer++为：
 
 [source,java,linenums]
 ----
@@ -211,7 +208,7 @@ public class Printer {
 }
 ----
 
-And the Spring bean configuration (also shown above) looks like this:
+Spring bean配置（上面已经展示过）为：
 
 [source,xml,linenums]
 ----
@@ -223,12 +220,12 @@ And the Spring bean configuration (also shown above) looks like this:
 </beans>
 ----
 
+[[_automatic_resource_deployment]]
+=== 自动部署资源
 
-=== Automatic resource deployment
+集成Spring也提供了部署资源的特殊方式。在流程引擎配置中，可以指定一组资源。当创建流程引擎时，会扫描并部署这些资源。可以用过滤器阻止重复部署：只有当资源确实发生变化时，才会重新部署至Flowable数据库。在Spring容器经常重启（例如测试时）的时候，这很有用。
 
-Spring integration also has a special feature for deploying resources.  In the process engine configuration, you can specify a set of resources. When the process engine is created, all those resources will be scanned and deployed.  There is filtering in place that prevents duplicate deployments.  Only when the resources have actually changed will new deployments be deployed to the Flowable DB. This makes sense in a lot of use cases, where the Spring container is rebooted frequently (for example, testing).
-
-Here's an example:
+这里有个例子：
 
 [source,xml,linenums]
 ----
@@ -243,13 +240,13 @@ Here's an example:
 </bean>
 ----
 
-By default, the configuration above will group all of the resources matching the filter into a single deployment to the Flowable engine. The duplicate filtering to prevent re-deployment of unchanged resources applies to the whole deployment. In some cases, this may not be what you want. For instance, if you deploy a set of process resources this way and only a single process definition in those resources has changed, the deployment as a whole will be considered new and all of the process definitions in that deployment will be re-deployed, resulting in new  versions of each of the process definitions, even though only one was actually changed.
+默认情况下，上面的配置方式会将符合这个过滤器的所有资源组织在一起，作为Flowable引擎的一个部署。重复检测过滤器将作用于整个部署，避免重复地部署未改变资源。有时这不是你想要的。例如，如果用这种方式部署了一组资源，即使只有其中的一个资源发生了改变，整个部署都会被视作已改变，因此这个部署中所有的所有流程定义都会被重新部署。这将导致每个流程定义都会刷新版本号（流程定义id会变化），即使实际上只有一个流程发生了变化。
 
-To be able to customize the way deployments are determined, you can specify an additional property in the +SpringProcessEngineConfiguration+, +deploymentMode+. This property defines the way deployments will be determined from the set of resources that match the filter. There are 3 values that are supported by default for this property:
+可以使用++SpringProcessEngineConfiguration++中的额外参数+deploymentMode+，定制部署的方式。这个参数定义了对于一组符合过滤器的资源，组织部署的方式。默认这个参数有3个可用值：
 
-* ++default++: Group all resources into a single deployment and apply duplicate filtering to that deployment. This is the default value and it will be used if you don't specify a value.
-* ++single-resource++: Create a separate deployment for each individual resource and apply duplicate filtering to that deployment. This is the value you would use to have each process definition be deployed separately and only create a new process definition version if it has changed.
-* ++resource-parent-folder++: Create a separate deployment for resources that share the same parent folder and apply duplicate filtering to that deployment. This value can be used to create separate deployments for most resources, but still be able to group some by placing them in a shared folder. Here's an example of how to specify the +single-resource+ configuration for ++deploymentMode++:
+* ++default++: 将所有资源组织在一个部署中，整体用于重复检测过滤。这是默认值，在未设置这个参数时也会用这个值。
+* ++single-resource++: 为每个资源创建一个单独的部署，并用于重复检测过滤。如果希望单独部署每一个流程定义，并且只有在它发生变化时才创建新的流程定义版本，就应该使用这个值。
+* ++resource-parent-folder++: 为同一个目录下的资源创建一个单独的部署，并用于重复检测过滤。这个参数值可以为大多数资源创建独立的部署。同时仍可以通过将部分资源放在同一个目录下，将它们组织在一起。这里有一个将++deploymentMode++设置为++single-resource++的例子：
 
 
 [source,xml,linenums]
@@ -262,49 +259,16 @@ To be able to customize the way deployments are determined, you can specify an a
 </bean>
 ----
 
-In addition to using the values listed above for +deploymentMode+, you may require customized behavior towards determining deployments. If so, you can create a subclass of +SpringProcessEngineConfiguration+ and override the +getAutoDeploymentStrategy(String deploymentMode)+ method.  This method determines which deployment strategy is used for a certain value of the +deploymentMode+ configuration.
+如果上述++deploymentMode++的参数值不能满足要求，还可以自定义组织部署的行为。创建++SpringProcessEngineConfiguration++的子类，并覆盖++getAutoDeploymentStrategy(String deploymentMode)++方法。这个方法用于确定对给定的++deploymentMode++参数值，应使用何种部署策略。
 
 
 [[springUnitTest]]
 
 
-=== Unit testing
+=== 单元测试
 
-When integrating with Spring, business processes can be tested very easily using the standard <<apiUnitTesting,Flowable testing facilities>>.
-The following examples show how a business process is tested in typical Spring-based JUnit 4 and 5 test:
+与Spring集成后，业务流程可以非常简单地使用标准的 <<apiUnitTesting,Flowable测试工具>>进行测试。下面的例子展示了如何通过典型的基于Spring的单元测试，对业务流程进行测试：
 
-.JUnit 5 test
-[source,java,linenums]
-----
-@ExtendWith(FlowableSpringExtension.class)
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = SpringJunitJupiterTest.TestConfiguration.class)
-public class MyBusinessProcessTest {
-
-  @Autowired
-  private RuntimeService runtimeService;
-
-  @Autowired
-  private TaskService taskService;
-
-  @Test
-  @Deployment
-  void simpleProcessTest() {
-    runtimeService.startProcessInstanceByKey("simpleProcess");
-    Task task = taskService.createTaskQuery().singleResult();
-    assertEquals("My Task", task.getName());
-
-    taskService.complete(task.getId());
-    assertEquals(0, runtimeService.createProcessInstanceQuery().count());
-
-  }
-}
-----
-
-Using the +FlowableSpringExtension+ allows the usage of the +Deployment+ annotation.
-
-
-.JUnit 4 test
 [source,java,linenums]
 ----
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -335,7 +299,8 @@ public class MyBusinessProcessTest {
 }
 ----
 
-Note that for this to work, you need to define an _org.flowable.engine.test.Flowable_ bean in the Spring configuration (which is injected by auto-wiring in the example above).
+请注意要让这个例子可以正常工作，需要在Spring配置中定义__org.flowable.engine.test.FlowableRule__ bean（在上面的例子中通过@Autowire注入）。
+
 
 [source,xml,linenums]
 ----
@@ -346,10 +311,10 @@ Note that for this to work, you need to define an _org.flowable.engine.test.Flow
 ----
 
 
+[[_jpa_with_hibernate_4_2_x]]
+=== 通过Hibernate 4.2.x使用JPA
 
-=== JPA with Hibernate 4.2.x
-
-When using Hibernate 4.2.x JPA in service task or listener logic in the Flowable engine, an additional dependency to Spring ORM is needed. This is not needed for Hibernate 4.1.x or earlier. The following dependency should be added:
+要在Flowable引擎的服务任务或者监听器逻辑中使用Hibernate 4.2.x JPA，需要添加Spring ORM的额外依赖。对Hibernate 4.1.x或更低则不需要。需要添加的依赖为：
 
 [source,xml,linenums]
 ----
