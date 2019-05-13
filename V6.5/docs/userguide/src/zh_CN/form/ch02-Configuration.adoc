@@ -1,12 +1,12 @@
 
-== Configuration
+== 配置
 
 [[configuration]]
 
 
 === 创建表单引擎
 
-_Flowable Form引擎的结构与Flowable流程引擎非常相似。 因此，文档的某些部分与其流程引擎对应部分相似._
+_Flowable 表单引擎的结构与Flowable流程引擎非常相似。 因此，文档的某些部分与其流程引擎对应部分相似._
 
 Flowable Form引擎通过名为flowable.form.cfg.xml的XML文件进行配置。 请注意，如果您使用的是“springintegration，构建表单引擎的Spring样式”，则这不适用*。
 
@@ -143,7 +143,7 @@ flowable.form.cfg.xml文件必须包含一个具有id值为 'formEngineConfigura
 * *jdbcMaxCheckoutTime*: 连接被取出使用的最长时间，超过时间会被强制回收。 默认为20000（20秒）。
 * *jdbcMaxWaitTime*:这是一个底层配置，让连接池可以在长时间无法获得连接时， 打印一条日志，并重新尝试获取一个连接。（避免因为错误配置导致沉默的操作失败）。 默认为20000（20秒）。
 
-Example database configuration:
+示例数据库配置：
 
 [source,xml,linenums]
 ----
