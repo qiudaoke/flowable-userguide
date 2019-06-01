@@ -1,4 +1,5 @@
 Flowable6.5版本还存在的Bug列表：
+
 1、error相关的没法使用。比如异常抛出、捕获事件、异常启动事件。(严重)
 2、排他网关默认连线丢失。(严重)
 3、局部信号没发使用。(严重)
@@ -19,7 +20,9 @@ Flowable6.5版本还存在的Bug列表：
 20、BusinessRuleTask的class或expression属性设计器缺失。（缺陷）
 21、邮件任务跳过表达式、ignoreException和exceptionVariableName 属性设计器缺失。（缺陷）
 22、业务规则任务没有ignoreException属性和跳过表达式（缺陷）
-23、服务任务useLocalScopeForResultVariable属性丢失。（一般）
+23、HTTP任务文档错误以及新属性丢失。（一般）
+24、HTTP任务 设计器 httpActivityBehaviorClass属性丢失。
+25、决策任务显示名称图标不错误（一般）
 
 
 已经PR的或者官方发现并解决的:
@@ -29,10 +32,11 @@ Flowable6.5版本还存在的Bug列表：
 4、Flowable6.4 DMN 规则策略与dmn规范中的有冲突。Flowable6.4.1已经修复。
 5、信号事件不支持异步方式修复。PR日期：20190525（6.5版本已经合并）
 6、脚本任务resultVariable 属性缺失  PR日期：20190530
-7、BPMN邮件服务描述信息文档有误更正。    PR日期：20190530（6.5版本已经合并）
-8、Flowable-admin模块子流程图片显示有问题bug （6.5版本已经合并）
+7、BPMN邮件服务描述信息文档有误更正。    PR日期：20190530                                  （6.5版本已经合并）
+8、Flowable-admin模块子流程图片显示有问题bug                                             （6.5版本已经合并）
 9、事件边界、事件取消、事件抛出新特性汉化     PR日期：20190530
 10、脚本任务中英文文档描述错误修改     PR日期：20190531
+11、服务任务useLocalScopeForResultVariable属性丢失。 PR日期：20190601
 
 
 
