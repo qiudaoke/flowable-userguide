@@ -15,9 +15,14 @@ Flowable6.5版本还存在的Bug列表：
 16、bpmn部署缺少补偿边界事件多绑定校验机制。（严重）
 17、升级事件设计器显示有问题
 18、补偿活动设计器显示有问题
-19、邮件任务缺少ignoreException 和 exceptionVariableName两个属性
-已经PR的或者官方发现并解决的:
+19、邮件任务缺少ignoreException 和 exceptionVariableName两个属性（缺陷）
+20、BusinessRuleTask的class或expression属性设计器缺失。（缺陷）
+21、邮件任务跳过表达式、ignoreException和exceptionVariableName 属性设计器缺失。（缺陷）
+22、业务规则任务没有ignoreException属性和跳过表达式（缺陷）
+23、服务任务useLocalScopeForResultVariable属性丢失。（一般）
 
+
+已经PR的或者官方发现并解决的:
 1、中间信号抛出事件 异步属性丢失。（已经PR,6.5版本之后没有这个问题）  PR日期：20190526（6.5版本已经合并）
 2、流程图连线没有条件，有时候会将没有条件的顺序流生成为带菱形的顺序流。（已经PR,6.5版本之后没有这个问题） PR日期：20190526（6.5版本已经合并）
 3、Flowable6.4.1 Maven包Oracle DDL语法错误，升级到6.5以上版本或者不要开启数据库升级策略。
@@ -27,12 +32,16 @@ Flowable6.5版本还存在的Bug列表：
 7、BPMN邮件服务描述信息文档有误更正。    PR日期：20190530（6.5版本已经合并）
 8、Flowable-admin模块子流程图片显示有问题bug （6.5版本已经合并）
 9、事件边界、事件取消、事件抛出新特性汉化     PR日期：20190530
-
+10、脚本任务中英文文档描述错误修改     PR日期：20190531
 
 
 
 Flowable6.5新特性
 1、支持中文使用手册。UI应用全部支持国际化。
+2、邮件任务支持跳过表达式。
+3、增加条件事件。
+
+
 
 
 
