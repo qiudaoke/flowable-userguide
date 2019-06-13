@@ -38,7 +38,10 @@ Flowable6.5版本还存在的Bug列表：
 10、脚本任务中英文文档描述错误修改     PR日期：20190531                                    （6.5版本已经合并）
 11、服务任务useLocalScopeForResultVariable属性丢失。 PR日期：20190601                      （6.5版本已经合并）
 12、HTTP任务 设计器 httpActivityBehaviorClass属性丢失。      PR日期：20190606
-
+13、流程定义ID（流程定义表主键）过长的时候，会变成一个UUID       修复
+14、cmmn 用户任务监听器设置人历史表不更新问题                  修复
+15、将引擎名称添加到acquire-async-jobs，acquire-timer-jobs和reset-expired-jobs线程名称。
+16、
 
 
 Flowable6.5新特性
