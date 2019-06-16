@@ -23,7 +23,7 @@ Flowable6.5版本还存在的Bug列表：
 25、决策任务显示名称图标不错误（一般）
 26、折叠子流程图标显示丢失（一般）
 27、调用活动流程图标显示丢失（一般）
-
+28、Modeler设计器中任务节点Assigned to process initiator 功能有严重bug，导致不能用。
 
 已经PR的或者官方发现并解决的:
 1、中间信号抛出事件 异步属性丢失。（已经PR,6.5版本之后没有这个问题）                                   PR日期：20190526（6.5版本已经合并）
@@ -38,10 +38,9 @@ Flowable6.5版本还存在的Bug列表：
 10、脚本任务中英文文档描述错误修改     PR日期：20190531                                    （6.5版本已经合并）
 11、服务任务useLocalScopeForResultVariable属性丢失。 PR日期：20190601                      （6.5版本已经合并）
 12、HTTP任务 设计器 httpActivityBehaviorClass属性丢失。      PR日期：20190606
-13、流程定义ID（流程定义表主键）过长的时候，会变成一个UUID       修复
-14、cmmn 用户任务监听器设置人历史表不更新问题                  修复
-15、将引擎名称添加到acquire-async-jobs，acquire-timer-jobs和reset-expired-jobs线程名称。
-16、
+13、流程定义ID（流程定义表主键）过长的时候，会变成一个UUID                                       修复
+14、cmmn 用户任务监听器设置人历史表不更新问题                                               修复
+15、将引擎名称添加到acquire-async-jobs，acquire-timer-jobs和reset-expired-jobs线程名称。    修复
 
 
 Flowable6.5新特性
