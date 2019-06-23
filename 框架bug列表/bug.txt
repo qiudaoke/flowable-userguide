@@ -26,6 +26,8 @@ Flowable6.5版本还存在的Bug列表：
 28、Modeler设计器中任务节点Assigned to process initiator 功能有严重bug，导致不能用。               （严重）
 29、执行实例树并发无范围活动的isConcurrent字段错误。 正确做法是true，而不是false                    （严重）
 30、框架重构Bug导致执行实例树   isScope和isConcurrent两个属性不互斥。数据紊乱                        （严重）
+31、事件监听器modeler属性丢失。（一般）
+32、事务事件处理器没有入口定义。（一般）
 
 
 
@@ -47,11 +49,13 @@ Flowable6.5版本还存在的Bug列表：
 14、cmmn 用户任务监听器设置人历史表不更新问题                                               修复
 15、将引擎名称添加到acquire-async-jobs，acquire-timer-jobs和reset-expired-jobs线程名称。    修复
 16、多实例触发边界事件错误逻辑修改                                                        修复
+17、ui项目去除javax.servlet依赖。
 
 Flowable6.5新特性
 1、支持中文使用手册。UI应用全部支持国际化。
 2、邮件任务支持跳过表达式。
 3、增加条件事件。
+4、异步执行器增加租户标识，asyncExecutorTenantId。
 
 
 
