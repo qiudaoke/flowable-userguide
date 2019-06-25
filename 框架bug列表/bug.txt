@@ -28,8 +28,8 @@ Flowable6.5版本还存在的Bug列表：
 30、框架重构Bug导致执行实例树   isScope和isConcurrent两个属性不互斥。数据紊乱                        （严重）
 31、事件监听器modeler属性丢失。（一般）
 32、事务事件处理器没有入口定义。（一般）
-
-
+33、开始节点名称图片不显示。endEvent的name属性也不显示。
+34、win10 谷歌浏览器 admin模块logo跑位。
 
 
 已经PR的或者官方发现并解决的:
