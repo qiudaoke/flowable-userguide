@@ -67,6 +67,13 @@ Flowable6.5新特性
 
 
 
+Flowable6.4.2新bug
+
+1、flowElementMap  bpmnModel.getMainProcess().getFlowElementList()  两个数据不一致，可能解析的时候有问题
+2、bpmnmodel 内部的process无法序列化        说明：18年反馈过，官方暂时不解决
+3、开源版泳道部分属性不支持， 盘古BPM已经修复。
+4、事件机制，有可能获取不到必要观察数据。
+
 
 
 
