@@ -1,11 +1,7 @@
-#  flowable-userguide是什么?
-该仓库是由Flowable核心开发人员tijsrademakers 和jbarrez等强烈要求之下建立的Flowable官方中国社区群。该仓库中的所有成员对于Flowable框架都有不可磨灭的贡献。该仓库主要维护Flowable文档的汉化工作以及设计器的汉化工作。该仓库所有成员均发自肺腑的热爱工作流技术，愿意为Flowable在中国的的发展做出伟大的贡献。
- 
+#  盘古BPM体验地址
+[盘古BPM体验](demo.pangubpm.com/fastflow-admin/index.html)
 #  如何贡献代码
 一起成为开源代码贡献人员，欢迎大家加入qq交流群为社区贡献添砖加瓦：1023773998
-
-
-
 
 
 
