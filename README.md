@@ -1,5 +1,5 @@
 #  盘古BPM体验地址
-[盘古BPM体验](demo.pangubpm.com/fastflow-admin/index.html)
+[盘古BPM体验](http://demo.pangubpm.com/fastflow-admin/index.html)
 #  如何贡献代码
 一起成为开源代码贡献人员，欢迎大家加入qq交流群为社区贡献添砖加瓦：1023773998
 
