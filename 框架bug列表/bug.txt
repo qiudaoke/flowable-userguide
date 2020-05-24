@@ -67,7 +67,7 @@ Flowable6.5新特性
 
 
 
-Flowable6.4.2新bug
+Flowable6.5新bug
 
 1、flowElementMap  bpmnModel.getMainProcess().getFlowElementList()  两个数据不一致，可能解析的时候有问题
 2、bpmnmodel 内部的process无法序列化        说明：18年反馈过，官方暂时不解决
@@ -78,5 +78,9 @@ Flowable6.4.2新bug
 7、达梦数据库liquibase sql true不支持 建议禁用liquibase
 
 
-
-
+Flowable6.5新发现的bug    日期：2020.5.24
+1、流程定义缓存中偶尔会查询不到定义id，进而导致流程定义模板查询不到id,实例无法运转。（严重），非Redis方式可忽略，redis方式导致无法使用（盘古BPM已经修复）
+2、流程定义扩展信息禁用功能开关没有控制好，导致禁用不生效。（一般）             可能导致查找模板的时候直行多次无用的数据库查询操作。（盘古BPM已经修复）
+3、原生flowable不支持redis。（一般）  （盘古BPM已经修复）官方不合并pr代码，暂时在盘古包中提供支持。
+4、流程定义发布高并发可能会出现key重复，进而导致错误（同一个key部署多次）。（一般）  暂时没有修复
+5、流程定义缓存中偶尔会查询不到定义id，进而导致程序重复刷库查找，死循环，造成堆栈溢出。（严重）    暂时没有修复。
