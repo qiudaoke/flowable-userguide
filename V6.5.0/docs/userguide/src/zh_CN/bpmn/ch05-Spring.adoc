@@ -131,8 +131,7 @@ UserBean userBean = (UserBean) applicationContext.getBean("userBean");
 userBean.hello();
 ----
 
-UserBean看起来像下面这样。请记着在上面的Spring bean配置中，我们已经将runtimeService
-注入了userBean。
+UserBean看起来像下面这样。请记着在上面的Spring bean配置中，我们已经将runtimeService注入了userBean。
 
 [source,java,linenums]
 ----
