@@ -306,7 +306,6 @@ ${myBean.doSomething(myVar, execution)}
 ----
 
 请注意，表达式支持解析（及比较）原始类型(primitive)、bean、list、array与map。
-Note that these expressions support resolving primitives (including comparing them), beans, lists, arrays and maps.
 
 除了所有流程变量外，还有一些默认对象可在表达式中使用：
 
