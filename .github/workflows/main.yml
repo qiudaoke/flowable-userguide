@@ -18,9 +18,9 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        module: ['bpmn','cmmn','dmn','form']
+#     strategy:
+#       matrix:
+#         module: ['bpmn','cmmn','dmn','form']
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -45,41 +45,70 @@ jobs:
         run: gem install pygments.rb
       - name: Asciidoctor-pdf install
         run: gem install asciidoctor-pdf
-      - name: generate
-        working-directory: ./V6.5.0/docs/userguide/scripts/
-        run: ./generate-all.sh ${{ matrix.module }}
-
-      - name: cp-files 
-        working-directory: ./${{ env.version }}/docs/userguide/src/${{ env.language }}/${{ matrix.module }}/
-        run: |
-          ls -l
-          mkdir  $GITHUB_WORKSPACE/${{ matrix.module }}-output/
-          cp -r ./output/  $GITHUB_WORKSPACE/${{ matrix.module }}-output/
-      - name: package
-        working-directory: ./${{ matrix.module }}-output/output
-        run: |
-         # mkdir ${{runner.workspace}}/${{ matrix.module }}-output/output
-          tar -zcvf ${{ matrix.module }}.tar.gz ./*
-          ls -l
-          pwd
-#          mv ./${{ matrix.module }}.tar.gz   ${{runner.workspace}}/${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
         
-#       - name: Upload Release Asset
-#         id: upload-release-asset 
-#         uses: actions/upload-release-asset@v1
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#         with:
-#           upload_url: ${{ needs.create_release.outputs.upload_url }}
-#           asset_path: ./${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
-#           asset_name: ${{ matrix.module }}.tar.gz
-#       - name: Upload a Build Artifact
-#         uses: actions/upload-artifact@v2
-#         with:
-#           name: my-artifact
-#           path: |
-#             ./${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
+      - name: generate-bpmn
+        working-directory: ./V6.5.0/docs/userguide/scripts/
+        run: ./generate-all.sh bpmn
 
+      - name: generate-cmmn
+        working-directory: ./V6.5.0/docs/userguide/scripts/
+        run: ./generate-all.sh cmmn
+
+      - name: generate-dmn
+        working-directory: ./V6.5.0/docs/userguide/scripts/
+        run: ./generate-all.sh dmn
+        
+      - name: generate-form
+        working-directory: ./V6.5.0/docs/userguide/scripts/
+        run: ./generate-all.sh form
+        
+        
+      - name: cp-files-bpmn 
+        working-directory: ./${{ env.version }}/docs/userguide/src/${{ env.language }}/bpmn/
+        run: |
+          mkdir  $GITHUB_WORKSPACE/bpmn-output/
+          cp -r ./output/  $GITHUB_WORKSPACE/bpmn-output/
+
+      - name: cp-files-cmmn 
+        working-directory: ./${{ env.version }}/docs/userguide/src/${{ env.language }}/cmmn/
+        run: |
+          mkdir  $GITHUB_WORKSPACE/cmmn-output/
+          cp -r ./output/  $GITHUB_WORKSPACE/cmmn-output/
+        
+      - name: cp-files-dmn 
+        working-directory: ./${{ env.version }}/docs/userguide/src/${{ env.language }}/dmn/
+        run: |
+          ls -l
+          mkdir  $GITHUB_WORKSPACE/dmn-output/ 
+          cp -r ./output/  $GITHUB_WORKSPACE/dmn-output/
+ 
+      - name: cp-files-form 
+        working-directory: ./${{ env.version }}/docs/userguide/src/${{ env.language }}/form/
+        run: |
+          ls -l
+          mkdir  $GITHUB_WORKSPACE/form-output/
+          cp -r ./output/  $GITHUB_WORKSPACE/form-output/       
+       
+          
+      - name: package-bpmn
+        working-directory: ./bpmn-output/output
+        run: |
+          tar -zcvf bpmn.tar.gz ./*
+
+      - name: package-cmmn
+        working-directory: ./cmmn-output/output
+        run: |
+          tar -zcvf cmmn.tar.gz ./*
+
+      - name: package-dmn
+        working-directory: ./dmn-output/output
+        run: |
+          tar -zcvf dmn.tar.gz ./*
+
+      - name: package-form
+        working-directory: ./form-output/output
+        run: |
+          tar -zcvf form.tar.gz ./*
 
       - name: Github Release create, update, and upload assets
       # You may pin to the exact commit or the version.
@@ -89,7 +118,6 @@ jobs:
           # Github API token to be used. Quite unavoidable, I'm afraid.
           token: ${{ secrets.GITHUB_TOKEN }}
           # A tag for the release. Required UNLESS action is run on tag push (meaning: '$GITHUB_REF' contains 'ref/tag/<TAG>').
-
           tag: ${{ env.version }}
           #tag: # optional
           # Unnecessary, if the tag provided is a git tag. If it isn't, release will be created off 'master'.
@@ -105,7 +133,10 @@ jobs:
         #  prerelease: ./${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
         #  # A whitespace-separated(!) list of files to be uploaded. It's impossible to pass a list here, so make sure filenames don't contain spaces nor colons in their names/paths.  Optionally custom asset name can be specified by pre-pending it to the name, ex: 'asset-name.tgz:./folder-to-be-uploaded/'.
           files: >
-            ./${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
+            ./bpmn-output/output/bpmn.tar.gz
+            ./cmmn-output/output/cmmn.tar.gz
+            ./dmn-output/output/dmn.tar.gz
+            ./form-output/output/form.tar.gz
           # Default is 'true', which compresses both files, and folders. 'false' compresses nothing, but will error out on folders, as they can't be uploaded. 'folders' applies compression to folders only.
           gzip: false 
           # optional, default is true
