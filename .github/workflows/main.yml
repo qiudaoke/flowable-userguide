@@ -1,0 +1,118 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+env:
+  language: en
+  version: V6.5.0
+  ruby_version: 3.0.3
+  module: bpmn
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: ['bpmn','cmmn','dmn','form']
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      
+      - name: Setup Ruby, JRuby and TruffleRuby
+        # You may pin to the exact commit or the version.
+        # uses: ruby/setup-ruby@cf1a6dd2d8563b59c7007e381836fd252ab2ac5b
+        uses: ruby/setup-ruby@v1.87.0
+        with:
+          ruby-version: ${{ env.ruby_version }}
+          bundler-cache: true 
+          working-directory: .
+      - name: Asciidoctor Setup
+        # You may pin to the exact commit or the version.
+        # uses: reitzig/actions-asciidoctor@7570212ae20b63653481675fb1ff62d1073632b0
+        uses: reitzig/actions-asciidoctor@v2.0.0
+        with:
+          Example: 2.0.10
+          version: ~>2.0
+      - name: Pygments install
+        run: gem install pygments.rb
+      - name: Asciidoctor-pdf install
+        run: gem install asciidoctor-pdf
+      - name: generate
+        working-directory: ./V6.5.0/docs/userguide/scripts/
+        run: ./generate-all.sh ${{ matrix.module }}
+
+      - name: cp-files 
+        working-directory: ./${{ env.version }}/docs/userguide/src/${{ env.language }}/${{ matrix.module }}/
+        run: |
+          ls -l
+          mkdir  $GITHUB_WORKSPACE/${{ matrix.module }}-output/
+          cp -r ./output/  $GITHUB_WORKSPACE/${{ matrix.module }}-output/
+      - name: package
+        working-directory: ./${{ matrix.module }}-output/output
+        run: |
+         # mkdir ${{runner.workspace}}/${{ matrix.module }}-output/output
+          tar -zcvf ${{ matrix.module }}.tar.gz ./*
+          ls -l
+          pwd
+#          mv ./${{ matrix.module }}.tar.gz   ${{runner.workspace}}/${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
+        
+#       - name: Upload Release Asset
+#         id: upload-release-asset 
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           upload_url: ${{ needs.create_release.outputs.upload_url }}
+#           asset_path: ./${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
+#           asset_name: ${{ matrix.module }}.tar.gz
+#       - name: Upload a Build Artifact
+#         uses: actions/upload-artifact@v2
+#         with:
+#           name: my-artifact
+#           path: |
+#             ./${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
+
+
+      - name: Github Release create, update, and upload assets
+      # You may pin to the exact commit or the version.
+      # uses: meeDamian/github-release@7ae19492500104f636b3fee4d8103af0fed36c8e
+        uses: meeDamian/github-release@v2.0.3
+        with:
+          # Github API token to be used. Quite unavoidable, I'm afraid.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # A tag for the release. Required UNLESS action is run on tag push (meaning: '$GITHUB_REF' contains 'ref/tag/<TAG>').
+
+          tag: ${{ env.version }}
+          #tag: # optional
+          # Unnecessary, if the tag provided is a git tag. If it isn't, release will be created off 'master'.
+         # commitish: # optional
+          # Name the release, the more creative, the better.
+         # name: # optional
+          # Longer description of the release, ex. changelog, or info about contributors.
+         # body: # optional
+          # Keep the Release as draft and don't publish it. With no 'files', the default is 'false'. With 'files' default is to 'un-draft' the release only after and if all assets upload successfully. Keep it private with explicit 'false'.
+
+         # draft: # optional
+          # Marks Release as a pre-Release.
+        #  prerelease: ./${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
+        #  # A whitespace-separated(!) list of files to be uploaded. It's impossible to pass a list here, so make sure filenames don't contain spaces nor colons in their names/paths.  Optionally custom asset name can be specified by pre-pending it to the name, ex: 'asset-name.tgz:./folder-to-be-uploaded/'.
+          files: >
+            ./${{ matrix.module }}-output/output/${{ matrix.module }}.tar.gz
+          # Default is 'true', which compresses both files, and folders. 'false' compresses nothing, but will error out on folders, as they can't be uploaded. 'folders' applies compression to folders only.
+          gzip: false 
+          # optional, default is true
+          # Set to 'true' to allow for release overriding.
+          allow_override: false
