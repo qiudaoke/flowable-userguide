@@ -1,5 +1,5 @@
 #  盘古BPM体验地址
-[盘古BPM体验](http://vue.pangubpm.com/)
+[BPM体验]([http://vue.pangubpm.com/](http://bpm.je4.cn/))
 #  如何贡献代码
 一起成为开源代码贡献人员，欢迎大家加入qq交流群为社区贡献添砖加瓦：1023773998
 
